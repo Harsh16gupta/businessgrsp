@@ -1,0 +1,168 @@
+// schema.prisma
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+model Admin {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    phone     String   @unique
+    password  String   // Hashed password
+    name      String
+    email     String?
+    role      UserRole @default(ADMIN)
+    isActive  Boolean  @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("admins")
+}
+
+model BusinessUser {
+    id          String   @id @default(auto()) @map("_id") @db.ObjectId
+    phone       String   @unique
+    name        String
+    email       String
+    companyName String
+    location    String
+    role        UserRole @default(BUSINESS)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    // For verification of OTP
+    verificationCode String?
+    codeExpiresAt    DateTime?
+    isVerified       Boolean   @default(false)
+
+    bookings BusinessBooking[]
+
+    @@map("business_users_data")
+}
+
+model Worker {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    phone     String   @unique
+    name      String?
+    email     String?
+    role      UserRole @default(WORKER)
+    services  String[] // Categories this worker can handle
+    rating    Float?
+    isActive  Boolean? @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // For Mobile Verification
+    verificationCode String?
+    codeExpiresAt    DateTime?
+    isVerified       Boolean   @default(false)
+
+    bookings BusinessBookingAssignment[]
+
+    @@map("workers_data")
+}
+
+model VerificationCode {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    phone     String
+    code      String
+    expiresAt DateTime
+    used      Boolean  @default(false)
+    userType  UserType
+
+    @@map("verification_codes")
+}
+
+model BusinessBooking {
+    id              String                @id @default(auto()) @map("_id") @db.ObjectId
+    businessId      String                @db.ObjectId
+    serviceId       String?                @db.ObjectId // ✅ ADD THIS: Reference to Service
+    serviceType     String // Keep for backward compatibility
+    workersNeeded   Int
+    duration        String
+    location        String
+    additionalNotes String?
+    status          BusinessBookingStatus @default(PENDING)
+    negotiatedPrice Float?
+    createdAt       DateTime              @default(now())
+    updatedAt       DateTime              @updatedAt
+    acceptToken     String?               @unique
+    expiresAt       DateTime?
+    date            DateTime?
+
+    // Relations
+    business    BusinessUser                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+    service     Service?                     @relation(fields: [serviceId], references: [id]) // ✅ ADD THIS
+    assignments BusinessBookingAssignment[]
+
+    @@map("business_bookings")
+}
+
+model BusinessBookingAssignment {
+    id        String           @id @default(auto()) @map("_id") @db.ObjectId
+    bookingId String           @db.ObjectId
+    workerId  String           @db.ObjectId
+    status    AssignmentStatus @default(PENDING)
+    createdAt DateTime         @default(now())
+    updatedAt DateTime         @updatedAt
+
+    // Relations
+    booking BusinessBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+    worker  Worker          @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+    @@map("business_booking_assignments")
+}
+
+model Service {
+    id            String   @id @default(auto()) @map("_id") @db.ObjectId
+    name          String   @unique
+    description   String
+    category      String
+    basePrice     Float
+    serviceCharge Float
+    duration      String
+    image         String?
+    tags          String[]
+    seoKeywords   String[]
+    popularity    Int      @default(0)
+    featured      Boolean  @default(false)
+    isActive      Boolean  @default(true)
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+
+    // Relations
+    bookings BusinessBooking[]
+
+    @@map("services")
+}
+
+enum UserRole {
+    WORKER
+    ADMIN
+    BUSINESS
+}
+
+enum UserType {
+    BUSINESS
+    WORKER
+}
+
+enum BusinessBookingStatus {
+    PENDING
+    NEGOTIATING
+    CONFIRMED
+    ASSIGNED
+    COMPLETED
+    CANCELLED
+    EXPIRED
+}
+
+enum AssignmentStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+    COMPLETED
+}
