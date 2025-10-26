@@ -14,10 +14,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify service exists
-    const service = await prisma.services.findUnique({
-      where: { id: serviceId, isActive: true },
-      include: { worker: true }
+    // Verify service exists - FIXED: use prisma.service (singular)
+    const service = await prisma.service.findUnique({
+      where: { id: serviceId, isActive: true }
     });
 
     if (!service) {
@@ -32,28 +31,25 @@ export async function POST(request: NextRequest) {
     const MINIMUM_SERVICE_CHARGE = 50;
     
     const serviceCharge = Math.max(
-      (service.price * SERVICE_CHARGE_PERCENTAGE) / 100,
+      (service.basePrice * SERVICE_CHARGE_PERCENTAGE) / 100, // FIXED: use basePrice instead of price
       MINIMUM_SERVICE_CHARGE
     );
     
-    const totalPrice = service.price + serviceCharge;
+    const totalPrice = service.basePrice + serviceCharge; // FIXED: use basePrice
 
     // In a real app, you'd store cart items in database
     // For now, we'll return the calculated cart item
     const cartItem = {
       id: service.id,
       serviceId: service.id,
-      title: service.title,
+      title: service.name, // FIXED: use name instead of title
       description: service.description,
-      basePrice: service.price,
+      basePrice: service.basePrice, // FIXED: use basePrice
       serviceCharge,
       totalPrice,
       quantity,
-      duration: service.duration,
-      worker: {
-        name: service.worker.name,
-        rating: service.worker.rating
-      }
+      duration: service.duration
+      // REMOVED: worker info since Service model doesn't have worker relation in your schema
     };
 
     return NextResponse.json({
