@@ -7,7 +7,7 @@ interface ServiceUpdateData {
     description?: string;
     category?: string;
     basePrice?: number;
-    duration?: string; // CHANGED: string to match Prisma schema
+    duration?: string;
     isActive?: boolean;
     updatedAt: Date;
 }

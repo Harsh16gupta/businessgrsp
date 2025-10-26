@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "buildCommand": "prisma generate --schema=lib/db/schema.prisma && next build",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
+}
