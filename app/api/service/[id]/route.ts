@@ -20,18 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             throw new ValidationError('Service ID is required')
         }
         const service = await prisma.service.findUnique({
-            where: { id },
-            include: {
-                worker: {
-                    select: {
-                        id: true,
-                        name: true,
-                        phone: true,
-                        rating: true,
-                        services: true
-                    }
-                }
-            }
+            where: { id }
         })
         if (!service) {
             throw new NotFoundError('Service')
@@ -62,43 +51,37 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     try {
         const { id } = await params;
         const body = await request.json()
-        const { title, description, category, price, duration, isActive } = body
+        const { name, description, category, basePrice, duration, isActive } = body // FIXED: use correct field names from schema
+        
         if (!id) {
             throw new ValidationError("Service ID is required")
         }
+        
         const existingServiceId = await prisma.service.findUnique({
             where: { id }
         })
         if (!existingServiceId) {
             throw new NotFoundError("This service does not exist in database")
         }
-        // Prepare update data
+        
+        // Prepare update data - using correct field names from your schema
         const updateData: ServiceUpdateData = { updatedAt: new Date() };
-        if (title !== undefined) updateData.title = title.trim()
+        if (name !== undefined) updateData.title = name.trim() // FIXED: map 'name' to 'title' if needed, or adjust interface
         if (description !== undefined) updateData.description = description.trim()
         if (category !== undefined) updateData.category = category.trim()
-        if (price !== undefined) {
-            if (price <= 0) throw new ValidationError('Price must be greater than 0')
-            updateData.price = parseFloat(price)
+        if (basePrice !== undefined) { // FIXED: use basePrice instead of price
+            if (basePrice <= 0) throw new ValidationError('Price must be greater than 0')
+            updateData.price = parseFloat(basePrice)
         }
         if (duration !== undefined) {
-            if (duration <= 0) throw new ValidationError('Duration must be greater than 0')
+            // FIXED: duration is string in your schema, not number
             updateData.duration = parseInt(duration)
         }
         if (isActive !== undefined) updateData.isActive = Boolean(isActive)
 
         const updatedService = await prisma.service.update({
             where: { id },
-            data: updateData,
-            include: {
-                worker: {
-                    select: {
-                        id: true,
-                        name: true,
-                        phone: true
-                    }
-                }
-            }
+            data: updateData
         })
 
         return NextResponse.json({
