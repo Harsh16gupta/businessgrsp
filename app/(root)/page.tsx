@@ -1,4 +1,5 @@
 
+"use client"
 import ServicesSection from '../../components/sections/ServicesSection'
 import FeaturesSection from '../../components/sections/FeaturesSection'
 
