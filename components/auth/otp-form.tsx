@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/input'
-import { validateOTP, type OTPFormData } from '@/lib/validations'
 import { apiCall } from '@/lib/utils'
 
 interface OTPFormProps {
@@ -15,6 +14,15 @@ interface OTPFormProps {
   onSuccess: (userData: any) => void
   onBack: () => void
   onResend: () => Promise<boolean>
+}
+
+// Define validation functions locally since the module isn't found
+const otpRegex = /^[0-9]{6}$/
+
+export function validateOTP(otp: string): string | null {
+  if (!otp) return 'OTP is required'
+  if (!otpRegex.test(otp)) return 'OTP must be 6 digits'
+  return null
 }
 
 export function OTPForm({ 
@@ -112,7 +120,8 @@ export function OTPForm({
       })
 
       if (result.success) {
-        onSuccess(result.user)
+        // Use result.data instead of result.user if that's what your API returns
+        onSuccess(result.data || result)
       } else {
         setError(result.error || 'Invalid OTP')
         // Clear OTP on error
@@ -141,7 +150,9 @@ export function OTPForm({
             {otp.map((digit, index) => (
               <Input
                 key={index}
-                ref={(el) => (inputRefs.current[index] = el)}
+                ref={(el: HTMLInputElement | null) => {
+                  inputRefs.current[index] = el
+                }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
