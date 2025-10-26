@@ -2,6 +2,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 
+// Define the type for available bookings
+type AvailableBooking = {
+    id: string;
+    businessId: string;
+    serviceId: string | null;
+    serviceType: string;
+    workersNeeded: number;
+    duration: string;
+    location: string;
+    additionalNotes: string | null;
+    status: string;
+    negotiatedPrice: number | null;
+    createdAt: Date;
+    updatedAt: Date;
+    acceptToken: string | null;
+    expiresAt: Date | null;
+    date: Date | null;
+    business: {
+        companyName: string;
+        name: string;
+    };
+};
+
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -44,9 +67,11 @@ export async function GET(request: NextRequest) {
             select: { services: true }
         });
 
-        let availableBookings = [];
+        // Initialize with proper type
+        let availableBookings: AvailableBooking[] = [];
+        
         if (worker && worker.services.length > 0) {
-            availableBookings = await prisma.businessBooking.findMany({
+            const bookings = await prisma.businessBooking.findMany({
                 where: {
                     status: 'PENDING',
                     serviceType: {
@@ -72,6 +97,8 @@ export async function GET(request: NextRequest) {
                 },
                 take: 10 // Limit to recent 10
             });
+            
+            availableBookings = bookings as AvailableBooking[];
         }
 
         return NextResponse.json({
