@@ -4,11 +4,33 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/input'
-import { validatePhone, validateName, type PhoneFormData } from '@/lib/validations'
 import { apiCall } from '@/lib/utils'
+
+interface PhoneFormData {
+  phone: string
+  userType: 'USER' | 'WORKER'
+  action: 'login' | 'register'
+  name?: string
+}
 
 interface PhoneFormProps {
   onSuccess: (data: PhoneFormData & { action: string }) => void
+}
+
+// Define validation functions locally
+const phoneRegex = /^[0-9]{10}$/
+
+export function validatePhone(phone: string): string | null {
+  if (!phone) return 'Phone number is required'
+  if (!phoneRegex.test(phone)) return 'Phone number must be 10 digits'
+  return null
+}
+
+export function validateName(name: string, action: string): string | null {
+  if (action === 'register' && !name?.trim()) {
+    return 'Name is required for registration'
+  }
+  return null
 }
 
 export function PhoneForm({ onSuccess }: PhoneFormProps) {
@@ -56,7 +78,8 @@ export function PhoneForm({ onSuccess }: PhoneFormProps) {
       })
 
       if (result.success) {
-        onSuccess({ ...formData, action: result.action })
+        // Use formData.action instead of result.action
+        onSuccess({ ...formData, action: formData.action })
       } else {
         setErrors({ phone: result.error || 'Failed to send OTP' })
       }
