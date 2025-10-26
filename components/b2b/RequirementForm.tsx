@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // Remove useSearchParams
+import { useRouter } from 'next/navigation'; 
 import { Service } from '@/lib/utils/constant';
 
 interface RequirementFormData {

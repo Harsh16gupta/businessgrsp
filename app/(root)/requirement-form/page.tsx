@@ -1,14 +1,14 @@
 import React from 'react'
 import RequirementForm from '@/components/b2b/RequirementForm';
 
-interface PageProps {
-  searchParams: {
+const Page = async (props: {
+  searchParams: Promise<{
     serviceType?: string;
     serviceId?: string;
-  }
-}
+  }>
+}) => {
+  const searchParams = await props.searchParams;
 
-const page = ({ searchParams }: PageProps) => {
   return (
     <div className='pt-10'>
       <RequirementForm 
@@ -19,4 +19,4 @@ const page = ({ searchParams }: PageProps) => {
   )
 }
 
-export default page
+export default Page

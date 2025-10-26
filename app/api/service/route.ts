@@ -11,9 +11,9 @@ export async function GET(request: NextRequest) {
 
     let whereClause: any = { isActive: true };
 
-    // Filter by category if provided - use 'category' field instead of 'slug'
+    // Filter by category if provided
     if (category && category !== 'all') {
-      whereClause.category = category; // ✅ FIX: Use 'category' field
+      whereClause.category = category;
     }
 
     // Search functionality
@@ -32,12 +32,12 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Transform to match frontend expectations
-    const transformedServices = services.map(service => ({
+    // Transform to match frontend expectations - FIXED: Add proper typing
+    const transformedServices = services.map((service: any) => ({
       id: service.id,
       name: service.name,
       description: service.description,
-      category: service.category, // ✅ FIX: Use 'category' field
+      category: service.category,
       basePrice: service.basePrice,
       serviceCharge: service.serviceCharge || Math.max((service.basePrice * 18) / 100, 50),
       duration: service.duration,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     
     const {
       name,
-      category, // ✅ FIX: Use 'category' instead of 'slug'
+      category,
       basePrice,
       description,
       image,
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     const service = await prisma.service.create({
       data: {
         name,
-        category, // ✅ FIX: Use 'category' field
+        category,
         basePrice: parseFloat(basePrice),
         serviceCharge: Math.max((parseFloat(basePrice) * 18) / 100, 50),
         description,
