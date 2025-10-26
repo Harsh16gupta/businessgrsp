@@ -1,3 +1,4 @@
+"use client"
 const features = [
   {
     title: "Verified Professionals",

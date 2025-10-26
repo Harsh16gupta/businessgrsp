@@ -1,3 +1,4 @@
+"use client"
 import ServiceCard from "../ui/ServiceCard"
 
 const services = [
