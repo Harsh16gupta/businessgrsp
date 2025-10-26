@@ -1,5 +1,5 @@
-"use client"
-import { useRef, Suspense } from 'react';
+"use client";
+import { useRef } from 'react';
 import FloatingElements from '@/components/b2b/FloatingElements';
 import Hero from '@/components/b2b/Hero';
 import HowItWorks from '@/components/b2b/HowItWorks';
@@ -16,7 +16,6 @@ export default function Home() {
       behavior: 'smooth',
       block: 'start'
     });
-    setTimeout(() => 800);
   };
 
   return (
@@ -25,18 +24,9 @@ export default function Home() {
       <Hero />
       <HowItWorks />
       
-      {/* Wrap RequirementForm in Suspense */}
+      {/* Remove Suspense since RequirementForm is now a client component */}
       <div ref={formRef}>
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-slate-600">Loading form...</p>
-            </div>
-          </div>
-        }>
-          <RequirementForm />
-        </Suspense>
+        <RequirementForm />
       </div>
       
       <WhyChooseUs />
