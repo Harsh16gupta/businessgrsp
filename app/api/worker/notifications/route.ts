@@ -1,7 +1,6 @@
 // app/api/worker/notifications/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
-import { BusinessBooking } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
     try {
@@ -45,7 +44,7 @@ export async function GET(request: NextRequest) {
             select: { services: true }
         });
 
-        let availableBookings: BusinessBooking[] = [];
+        let availableBookings = [];
         if (worker && worker.services.length > 0) {
             availableBookings = await prisma.businessBooking.findMany({
                 where: {

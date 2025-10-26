@@ -268,7 +268,7 @@ function StatCard({ title, value, icon, color, href }: {
   return (
     <Link
       href={href}
-      className={`block p-3 sm:p-4 border-2 rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer touch-manipulation ${colorClasses[color]}`}
+      className={`block p-3 sm:p-4 border-2 rounded-xl transition-all duration-200 hover:shadow-md cursor-pointer touch-manipulation`}
     >
       <div className="flex items-center">
         <div className="flex-shrink-0">
