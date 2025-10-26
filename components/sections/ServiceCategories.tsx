@@ -36,12 +36,11 @@ export default function ServiceCategories({
               onClick={() => onSelect(cat.id)}
             >
               <div className="flex items-center gap-3">
-                {cat.iconUrl && (
-                  <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
-                    {/* Icon would go here */}
-                    <span className="text-xs">⚡</span>
-                  </div>
-                )}
+                {/* Remove the iconUrl check since Category type doesn't have this property */}
+                <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
+                  {/* Default icon for all categories */}
+                  <span className="text-xs">⚡</span>
+                </div>
                 <span className="text-sm font-medium">{cat.name}</span>
               </div>
             </Button>

@@ -1,13 +1,61 @@
 'use client';
 
 import { useState } from 'react';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
-
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/Checkbox';
+
+// Define the missing types
+interface CheckoutItem {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+interface Address {
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  isDefault: boolean;
+}
+
+interface PaymentMethod {
+  id: string;
+  type: string;
+  name: string;
+  isDefault: boolean;
+}
+
+interface Coupon {
+  id: string;
+  code: string;
+  description: string;
+  discount: number;
+  discountType: 'percentage' | 'fixed';
+  minAmount: number;
+}
+
+interface CheckoutData {
+  items: CheckoutItem[];
+  addresses: Address[];
+  paymentMethods: PaymentMethod[];
+  coupons: Coupon[];
+  subtotal: number;
+  tax: number;
+  shipping: number;
+  discount: number;
+  total: number;
+  selectedAddress?: string;
+  selectedPayment?: string;
+  appliedCoupon?: string;
+}
 
 interface CheckoutComponentProps {
   data: CheckoutData;
@@ -87,7 +135,7 @@ export default function CheckoutComponent({ data, onPlaceOrder }: CheckoutCompon
             <CardContent>
               <h3 className="font-semibold mb-4">Select an address</h3>
               <div className="space-y-3">
-                {data.addresses.map((address) => (
+                {data.addresses.map((address: Address) => (
                   <div
                     key={address.id}
                     className="flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-accent/50 transition-all duration-200 hover:scale-[1.02]"
@@ -123,7 +171,7 @@ export default function CheckoutComponent({ data, onPlaceOrder }: CheckoutCompon
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {data.paymentMethods.map((method) => (
+                {data.paymentMethods.map((method: PaymentMethod) => (
                   <div
                     key={method.id}
                     className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-accent/50 transition-all duration-200 hover:scale-[1.02]"
@@ -150,7 +198,7 @@ export default function CheckoutComponent({ data, onPlaceOrder }: CheckoutCompon
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {data.items.map((item) => (
+                {data.items.map((item: CheckoutItem) => (
                   <div key={item.id} className="flex justify-between items-center">
                     <span>{item.name} x{item.quantity}</span>
                     <span>₹{item.price * item.quantity}</span>
@@ -185,7 +233,7 @@ export default function CheckoutComponent({ data, onPlaceOrder }: CheckoutCompon
                 
                 {showCoupons && (
                   <div className="space-y-2 animate-in fade-in-0 zoom-in-95 duration-300">
-                    {data.coupons.map((coupon) => (
+                    {data.coupons.map((coupon: Coupon) => (
                       <div
                         key={coupon.id}
                         className="p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-all duration-200 hover:scale-[1.02]"
