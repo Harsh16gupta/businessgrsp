@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation'; // Remove useSearchParams
 import { Service } from '@/lib/utils/constant';
 
 interface RequirementFormData {
@@ -17,13 +17,18 @@ interface RequirementFormData {
   proposedBudget: string;
 }
 
-export default function RequirementForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  
-  const preselectedService = searchParams.get('serviceType');
-  const serviceId = searchParams.get('serviceId');
+interface RequirementFormProps {
+  preselectedService?: string;
+  serviceId?: string;
+}
 
+export default function RequirementForm({ 
+  preselectedService = '', 
+  serviceId = '' 
+}: RequirementFormProps) {
+  const router = useRouter();
+  // Remove useSearchParams hook
+  
   const [formData, setFormData] = useState<RequirementFormData>({
     companyName: '',
     contactPerson: '',

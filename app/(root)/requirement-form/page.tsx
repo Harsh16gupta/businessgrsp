@@ -1,9 +1,20 @@
 import React from 'react'
 import RequirementForm from '@/components/b2b/RequirementForm';
-const page = () => {
+
+interface PageProps {
+  searchParams: {
+    serviceType?: string;
+    serviceId?: string;
+  }
+}
+
+const page = ({ searchParams }: PageProps) => {
   return (
     <div className='pt-10'>
-      <RequirementForm />
+      <RequirementForm 
+        preselectedService={searchParams.serviceType}
+        serviceId={searchParams.serviceId}
+      />
     </div>
   )
 }
