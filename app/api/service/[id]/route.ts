@@ -3,11 +3,11 @@ import { AppError, ValidationError, NotFoundError } from "@/lib/utils/error";
 import prisma from '@/lib/db'
 
 interface ServiceUpdateData {
-    title?: string;
+    name?: string;
     description?: string;
     category?: string;
-    price?: number;
-    duration?: number;
+    basePrice?: number;
+    duration?: string; // CHANGED: string to match Prisma schema
     isActive?: boolean;
     updatedAt: Date;
 }
@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     try {
         const { id } = await params;
         const body = await request.json()
-        const { name, description, category, basePrice, duration, isActive } = body // FIXED: use correct field names from schema
+        const { name, description, category, basePrice, duration, isActive } = body
         
         if (!id) {
             throw new ValidationError("Service ID is required")
@@ -64,18 +64,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             throw new NotFoundError("This service does not exist in database")
         }
         
-        // Prepare update data - using correct field names from your schema
-        const updateData: ServiceUpdateData = { updatedAt: new Date() };
-        if (name !== undefined) updateData.title = name.trim() // FIXED: map 'name' to 'title' if needed, or adjust interface
+        // Prepare update data - using correct field names and types from your schema
+        const updateData: any = { updatedAt: new Date() }; // Using any to avoid type conflicts
+        
+        if (name !== undefined) updateData.name = name.trim()
         if (description !== undefined) updateData.description = description.trim()
         if (category !== undefined) updateData.category = category.trim()
-        if (basePrice !== undefined) { // FIXED: use basePrice instead of price
+        if (basePrice !== undefined) {
             if (basePrice <= 0) throw new ValidationError('Price must be greater than 0')
-            updateData.price = parseFloat(basePrice)
+            updateData.basePrice = parseFloat(basePrice)
         }
         if (duration !== undefined) {
-            // FIXED: duration is string in your schema, not number
-            updateData.duration = parseInt(duration)
+            // Keep duration as string since that's what your schema expects
+            updateData.duration = duration.toString()
         }
         if (isActive !== undefined) updateData.isActive = Boolean(isActive)
 
