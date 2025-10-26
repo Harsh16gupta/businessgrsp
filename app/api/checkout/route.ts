@@ -1,4 +1,4 @@
-import { CheckoutData } from '@/app/types';
+
 import { NextRequest, NextResponse } from 'next/server';
 
 
@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     // This is where you'd fetch data from your database
     // For now, returning mock data
-    const checkoutData: CheckoutData = {
+    const checkoutData = {
       items: [
         { id: '1', name: 'Haircut for men', quantity: 1, price: 500 },
         { id: '2', name: 'Beard Trim & Design', quantity: 1, price: 317 },
