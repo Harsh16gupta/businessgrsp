@@ -6,12 +6,13 @@ import HowItWorks from '@/components/b2b/HowItWorks';
 import WhyChooseUs from '@/components/b2b/WhyChooseUs';
 import Testimonials from '@/components/b2b/Testimonials';
 import CTASection from '@/components/b2b/CTASection';
+import Link from 'next/link';
 
 export default function Home() {
   const formRef = useRef<HTMLDivElement>(null);
   
   const scrollToForm = () => {
-    // Redirect to requirement form page instead
+    // Redirect to the requirement form page instead
     window.location.href = '/requirement-form';
   };
 
@@ -21,18 +22,21 @@ export default function Home() {
       <Hero />
       <HowItWorks />
       
-      {/* Remove RequirementForm for now */}
-      <div ref={formRef} className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">
+      {/* REPLACED: Simple CTA section instead of RequirementForm */}
+      <div ref={formRef} className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center max-w-2xl mx-auto px-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
             Ready to Get Staff?
           </h2>
-          <button
-            onClick={scrollToForm}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
+          <p className="text-slate-600 mb-8 text-lg">
+            Submit your staffing requirements and we'll connect you with verified workers within 24 hours.
+          </p>
+          <Link 
+            href="/requirement-form"
+            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-colors duration-300"
           >
             Submit Your Requirement
-          </button>
+          </Link>
         </div>
       </div>
       
