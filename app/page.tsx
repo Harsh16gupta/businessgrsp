@@ -12,7 +12,6 @@ export default function Home() {
   const formRef = useRef<HTMLDivElement>(null);
   
   const scrollToForm = () => {
-    // Redirect to the requirement form page instead
     window.location.href = '/requirement-form';
   };
 
@@ -22,7 +21,6 @@ export default function Home() {
       <Hero />
       <HowItWorks />
       
-      {/* REPLACED: Simple CTA section instead of RequirementForm */}
       <div ref={formRef} className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center max-w-2xl mx-auto px-4">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
