@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
 
 interface BusinessFormData {
     phone: string
@@ -60,6 +61,12 @@ export default function BusinessAuthContent() {
                 location: prefillLocation || ''
             })
             setShowPrefillNotice(true)
+            
+            // Show toast notification for pre-filled data
+            toast.success('Form Pre-filled!', {
+                description: 'Your requirement form details have been auto-filled.',
+                duration: 4000,
+            })
         }
     }, [prefillPhone, prefillContactPerson, prefillEmail, prefillCompanyName, prefillLocation])
 
@@ -72,8 +79,16 @@ export default function BusinessAuthContent() {
                     const data = await response.json()
                     if (data.success && data.twilioConfigured && !data.simulated) {
                         setWhatsappStatus('active')
+                        toast.success('WhatsApp OTP Active', {
+                            description: 'You will receive OTP via WhatsApp',
+                            duration: 3000,
+                        })
                     } else {
                         setWhatsappStatus('inactive')
+                        toast.info('Using Simulation Mode', {
+                            description: 'OTP will be shown in notification',
+                            duration: 3000,
+                        })
                     }
                 } else {
                     setWhatsappStatus('inactive')
@@ -81,6 +96,10 @@ export default function BusinessAuthContent() {
             } catch (error) {
                 console.error('Failed to check WhatsApp status:', error)
                 setWhatsappStatus('inactive')
+                toast.error('Connection Error', {
+                    description: 'Failed to check WhatsApp status',
+                    duration: 3000,
+                })
             }
         }
 
@@ -134,6 +153,15 @@ export default function BusinessAuthContent() {
         }
 
         setValidationErrors(errors)
+        
+        // Show validation error toast if there are errors
+        if (Object.keys(errors).length > 0) {
+            toast.error('Validation Error', {
+                description: 'Please check the form for errors',
+                duration: 4000,
+            })
+        }
+        
         return Object.keys(errors).length === 0
     }
 
@@ -166,12 +194,19 @@ export default function BusinessAuthContent() {
         } catch (err) {
             setError('An unexpected error occurred. Please try again.')
             setLoading(false)
+            toast.error('Unexpected Error', {
+                description: 'An unexpected error occurred. Please try again.',
+                duration: 4000,
+            })
         }
     }
 
     const handleSendOTP = async () => {
         setLoading(true)
         setError('')
+
+        // Show loading toast
+        const loadingToast = toast.loading('Sending OTP...')
 
         try {
             const requestBody: any = {
@@ -180,7 +215,7 @@ export default function BusinessAuthContent() {
                 action: isRegister ? 'register' : 'login',
             }
 
-            // Add business details only for registration - FIX: Include ALL fields
+            // Add business details only for registration
             if (isRegister) {
                 requestBody.name = formData.name
                 requestBody.email = formData.email
@@ -206,9 +241,27 @@ export default function BusinessAuthContent() {
             const data = await response.json()
 
             if (data.success) {
-                // Show debug OTP in development/simulation mode
+                // Show OTP toast in both development and production modes when in simulation
                 if (data.simulated || data.debugOtp) {
-                    alert(`🔧 Development Mode: Your OTP is ${data.debugOtp}. Use this to verify.`)
+                    toast.success('OTP Sent Successfully!', {
+                        description: `Your OTP is ${data.debugOtp}. Use this to verify.`,
+                        duration: 10000, // 10 seconds for OTP
+                        action: {
+                            label: 'Copy OTP',
+                            onClick: () => {
+                                navigator.clipboard.writeText(data.debugOtp)
+                                toast.success('OTP Copied!', {
+                                    description: 'OTP copied to clipboard',
+                                    duration: 2000,
+                                })
+                            }
+                        }
+                    })
+                } else {
+                    toast.success('OTP Sent!', {
+                        description: `OTP has been sent to your ${whatsappStatus === 'active' ? 'WhatsApp' : 'phone'}`,
+                        duration: 5000,
+                    })
                 }
 
                 // Redirect to verification page with ALL data
@@ -218,7 +271,7 @@ export default function BusinessAuthContent() {
                     action: isRegister ? 'register' : 'login',
                 })
 
-                // Add business details only for registration - FIX: Include ALL fields
+                // Add business details only for registration
                 if (isRegister) {
                     params.append('name', formData.name)
                     params.append('email', formData.email)
@@ -238,14 +291,27 @@ export default function BusinessAuthContent() {
                     params.append('redirect', redirectFrom)
                 }
 
+                // Dismiss loading toast
+                toast.dismiss(loadingToast)
+                
                 router.push(`/verify?${params.toString()}`)
             } else {
                 setError(data.error || 'Failed to send OTP. Please try again.')
+                toast.error('Failed to Send OTP', {
+                    description: data.error || 'Please try again.',
+                    duration: 5000,
+                })
             }
         } catch (err) {
             setError('Network error. Please check your connection and try again.')
+            toast.error('Network Error', {
+                description: 'Please check your connection and try again.',
+                duration: 5000,
+            })
         } finally {
             setLoading(false)
+            // Dismiss loading toast in case of error
+            toast.dismiss(loadingToast)
         }
     }
 
@@ -462,7 +528,7 @@ export default function BusinessAuthContent() {
                                     <p className="text-xs text-gray-500 mt-1">
                                         {whatsappStatus === 'active'
                                             ? "We'll send a verification code via WhatsApp"
-                                            : 'Using simulation mode - OTP will be shown in alert'
+                                            : 'Using simulation mode - OTP will be shown in notification'
                                         }
                                     </p>
                                 )}

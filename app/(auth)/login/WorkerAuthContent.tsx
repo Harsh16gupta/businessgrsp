@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { WorkerServiceSelection } from '@/components/auth/WorkerServiceSelection'
+import { toast } from 'sonner'
 
 interface WorkerFormData {
   phone: string
@@ -39,11 +40,23 @@ export default function WorkerAuthContent() {
         
         if (data.success && data.twilioConfigured && !data.simulated) {
           setWhatsappStatus('active')
+          toast.success('WhatsApp OTP Active', {
+            description: 'You will receive OTP via WhatsApp',
+            duration: 3000,
+          })
         } else {
           setWhatsappStatus('inactive')
+          toast.info('Using Simulation Mode', {
+            description: 'OTP will be shown in notification',
+            duration: 3000,
+          })
         }
       } catch (error) {
         setWhatsappStatus('inactive')
+        toast.error('Connection Error', {
+          description: 'Failed to check WhatsApp status',
+          duration: 3000,
+        })
       }
     }
 
@@ -65,6 +78,10 @@ export default function WorkerAuthContent() {
       const phoneRegex = /^[6-9]\d{9}$/
       if (!phoneRegex.test(formData.phone)) {
         setError('Please enter a valid 10-digit Indian phone number')
+        toast.error('Invalid Phone Number', {
+          description: 'Please enter a valid 10-digit Indian phone number',
+          duration: 4000,
+        })
         setLoading(false)
         return
       }
@@ -72,9 +89,18 @@ export default function WorkerAuthContent() {
       if (isRegister) {
         if (!formData.name || formData.name.trim().length < 2) {
           setError('Please enter your full name')
+          toast.error('Name Required', {
+            description: 'Please enter your full name (at least 2 characters)',
+            duration: 4000,
+          })
           setLoading(false)
           return
         }
+        
+        toast.success('Profile Created!', {
+          description: 'Now select your service type',
+          duration: 3000,
+        })
         setStep('service')
         setLoading(false)
         return
@@ -83,6 +109,10 @@ export default function WorkerAuthContent() {
       await handleSendOTP()
     } catch (err) {
       setError('An error occurred. Please try again.')
+      toast.error('Unexpected Error', {
+        description: 'An unexpected error occurred. Please try again.',
+        duration: 4000,
+      })
       setLoading(false)
     }
   }
@@ -90,6 +120,12 @@ export default function WorkerAuthContent() {
   const handleServiceSelected = async (selectedService: string) => {
     const updatedFormData = { ...formData, service: selectedService }
     setFormData(updatedFormData)
+    
+    toast.success('Service Selected!', {
+      description: `${selectedService} service selected. Sending OTP...`,
+      duration: 3000,
+    })
+    
     await handleSendOTP(updatedFormData)
   }
 
@@ -97,6 +133,9 @@ export default function WorkerAuthContent() {
     const dataToUse = currentFormData || formData
     setLoading(true)
     setError('')
+
+    // Show loading toast
+    const loadingToast = toast.loading('Sending OTP...')
 
     try {
       const requestBody: any = {
@@ -121,8 +160,27 @@ export default function WorkerAuthContent() {
       const data = await response.json()
 
       if (data.success) {
+        // Show OTP toast in both development and production modes when in simulation
         if (data.simulated || data.debugOtp) {
-          alert(`🔧 Development Mode: Your OTP is ${data.debugOtp}. Use this to verify.`);
+          toast.success('OTP Sent Successfully!', {
+            description: `Your OTP is ${data.debugOtp}. Use this to verify.`,
+            duration: 10000, // 10 seconds for OTP
+            action: {
+              label: 'Copy OTP',
+              onClick: () => {
+                navigator.clipboard.writeText(data.debugOtp)
+                toast.success('OTP Copied!', {
+                  description: 'OTP copied to clipboard',
+                  duration: 2000,
+                })
+              }
+            }
+          })
+        } else {
+          toast.success('OTP Sent!', {
+            description: `OTP has been sent to your ${whatsappStatus === 'active' ? 'WhatsApp' : 'phone'}`,
+            duration: 5000,
+          })
         }
 
         const params = new URLSearchParams({
@@ -138,16 +196,29 @@ export default function WorkerAuthContent() {
           }
         }
 
+        // Dismiss loading toast
+        toast.dismiss(loadingToast)
+        
         router.push(`/verify?${params.toString()}`)
       } else {
         setError(data.error || 'Failed to send OTP')
         setStep('auth')
+        toast.error('Failed to Send OTP', {
+          description: data.error || 'Please try again.',
+          duration: 5000,
+        })
       }
     } catch (err) {
       setError('Network error. Please try again.')
       setStep('auth')
+      toast.error('Network Error', {
+        description: 'Please check your connection and try again.',
+        duration: 5000,
+      })
     } finally {
       setLoading(false)
+      // Dismiss loading toast in case of error
+      toast.dismiss(loadingToast)
     }
   }
 
@@ -157,7 +228,13 @@ export default function WorkerAuthContent() {
         <div className="w-full max-w-lg mx-auto">
           <WorkerServiceSelection
             onComplete={handleServiceSelected}
-            onBack={() => setStep('auth')}
+            onBack={() => {
+              setStep('auth')
+              toast.info('Back to Profile', {
+                description: 'You can modify your profile details',
+                duration: 3000,
+              })
+            }}
             singleSelection={true}
           />
         </div>
@@ -223,7 +300,14 @@ export default function WorkerAuthContent() {
                       ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25' 
                       : 'text-gray-600 hover:text-gray-800 hover:bg-white'
                   }`}
-                  onClick={() => setIsRegister(false)}
+                  onClick={() => {
+                    setIsRegister(false)
+                    setError('')
+                    toast.info('Login Mode', {
+                      description: 'Enter your phone number to login',
+                      duration: 3000,
+                    })
+                  }}
                 >
                   Login
                 </Button>
@@ -235,7 +319,14 @@ export default function WorkerAuthContent() {
                       ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25' 
                       : 'text-gray-600 hover:text-gray-800 hover:bg-white'
                   }`}
-                  onClick={() => setIsRegister(true)}
+                  onClick={() => {
+                    setIsRegister(true)
+                    setError('')
+                    toast.info('Registration Mode', {
+                      description: 'Create your worker account',
+                      duration: 3000,
+                    })
+                  }}
                 >
                   Register
                 </Button>
@@ -286,7 +377,7 @@ export default function WorkerAuthContent() {
                 <p className="text-xs text-gray-500 sm:text-sm">
                   {whatsappStatus === 'active' 
                     ? 'Verification code will be sent via WhatsApp' 
-                    : 'Using simulation mode'
+                    : 'Using simulation mode - OTP will be shown in notification'
                   }
                 </p>
               </motion.div>
