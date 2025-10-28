@@ -11,12 +11,14 @@ export async function POST(request: NextRequest) {
     console.log(`===+ OTP REQUEST +===`);
     console.log(`Phone: ${phone}, Action: ${action}, UserType: ${userType}`);
     console.log(`Name: ${name || 'Not provided'}`);
+    
     if (!['BUSINESS', 'WORKER'].includes(userType)) {
       return NextResponse.json(
         { success: false, error: 'Invalid user type. Only BUSINESS and WORKER are supported.' },
         { status: 400 }
       );
     }
+    
     // Validate required fields
     if (!phone || !userType) {
       return NextResponse.json(
@@ -48,35 +50,14 @@ export async function POST(request: NextRequest) {
     await storeOTP(phone, code, userType);
     console.log(`✅ OTP stored in database for: ${phone}`);
 
-    // TODO: FIX TWILIO SERVICE - Currently skipping due to Twilio 503 errors
-    // Send OTP via WhatsApp - temporarily disabled due to service issues
-    /*
-    try {
-      const otpResult = await sendOTP(phone, code, userType);
-      console.log(`✅ OTP sent successfully to ${phone}`, otpResult);
-    } catch (error:any) {
-      console.error(`❌ Failed to send OTP to ${phone}:`, error);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to send verification code. Please try again.',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        },
-        { status: 500 }
-      );
-    }
-    */
-
-    // TEMPORARY FIX: Skip Twilio and return success with OTP for development
-    // TODO: Remove this and uncomment Twilio code above when service is restored
+    // TEMPORARY FIX: Skip Twilio and return success with OTP for both development and production
     console.log(`🔧 TEMPORARY: Skipping Twilio, OTP for ${phone}: ${code}`);
 
     return NextResponse.json({
       success: true,
       message: `Verification code ready for ${phone}`,
-      // Include OTP in development for testing - remove in production
-      ...(process.env.NODE_ENV === 'development' && { debugOtp: code }),
-      simulated: true // Flag to indicate we're in simulation mode
+      debugOtp: code, // ALWAYS return the OTP in both development and production
+      simulated: true
     });
 
   } catch (error: any) {
@@ -100,7 +81,6 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     success: true,
     twilioConfigured: config.isConfigured,
-    // TODO: Remove simulated flag when Twilio is working
     simulated: true, // Temporary flag to indicate simulation mode
     config: {
       accountSid: config.accountSid,
@@ -109,3 +89,26 @@ export async function GET(request: NextRequest) {
     }
   });
 }
+
+
+    // TODO: FIX TWILIO SERVICE - Currently skipping due to Twilio 503 errors
+    // Send OTP via WhatsApp - temporarily disabled due to service issues
+    /*
+    try {
+      const otpResult = await sendOTP(phone, code, userType);
+      console.log(`✅ OTP sent successfully to ${phone}`, otpResult);
+    } catch (error:any) {
+      console.error(`❌ Failed to send OTP to ${phone}:`, error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Failed to send verification code. Please try again.',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        },
+        { status: 500 }
+      );
+    }
+    */
+
+    // TEMPORARY FIX: Skip Twilio and return success with OTP for development
+    // TODO: Remove this and uncomment Twilio code above when service is restored

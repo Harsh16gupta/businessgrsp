@@ -37,7 +37,7 @@ export default function WorkerAuthContent() {
       try {
         const response = await fetch('/api/auth/send-otp')
         const data = await response.json()
-        
+
         if (data.success && data.twilioConfigured && !data.simulated) {
           setWhatsappStatus('active')
           toast.success('WhatsApp OTP Active', {
@@ -96,7 +96,7 @@ export default function WorkerAuthContent() {
           setLoading(false)
           return
         }
-        
+
         toast.success('Profile Created!', {
           description: 'Now select your service type',
           duration: 3000,
@@ -120,12 +120,12 @@ export default function WorkerAuthContent() {
   const handleServiceSelected = async (selectedService: string) => {
     const updatedFormData = { ...formData, service: selectedService }
     setFormData(updatedFormData)
-    
+
     toast.success('Service Selected!', {
       description: `${selectedService} service selected. Sending OTP...`,
       duration: 3000,
     })
-    
+
     await handleSendOTP(updatedFormData)
   }
 
@@ -160,11 +160,13 @@ export default function WorkerAuthContent() {
       const data = await response.json()
 
       if (data.success) {
-        // Show OTP toast in both development and production modes when in simulation
-        if (data.simulated || data.debugOtp) {
+        // Dismiss loading toast first
+        toast.dismiss(loadingToast)
+        // Show OTP toast with the actual OTP from API response
+        if (data.debugOtp) {
           toast.success('OTP Sent Successfully!', {
             description: `Your OTP is ${data.debugOtp}. Use this to verify.`,
-            duration: 10000, // 10 seconds for OTP
+            duration: 15000, // 15 seconds to give user time to see it
             action: {
               label: 'Copy OTP',
               onClick: () => {
@@ -196,13 +198,15 @@ export default function WorkerAuthContent() {
           }
         }
 
-        // Dismiss loading toast
-        toast.dismiss(loadingToast)
-        
-        router.push(`/verify?${params.toString()}`)
+        // Add a small delay before redirecting to ensure toast is visible
+        setTimeout(() => {
+          router.push(`/verify?${params.toString()}`)
+        }, 1000)
+
       } else {
         setError(data.error || 'Failed to send OTP')
         setStep('auth')
+        toast.dismiss(loadingToast)
         toast.error('Failed to Send OTP', {
           description: data.error || 'Please try again.',
           duration: 5000,
@@ -211,20 +215,20 @@ export default function WorkerAuthContent() {
     } catch (err) {
       setError('Network error. Please try again.')
       setStep('auth')
+      toast.dismiss(loadingToast)
       toast.error('Network Error', {
         description: 'Please check your connection and try again.',
         duration: 5000,
       })
     } finally {
       setLoading(false)
-      // Dismiss loading toast in case of error
-      toast.dismiss(loadingToast)
     }
   }
 
   if (step === 'service') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-white sm:p-6 pt-20">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-white dark:bg-gray-800 
+                       text-gray-700 dark:text-gray-200 sm:p-6 pt-10">
         <div className="w-full max-w-lg mx-auto">
           <WorkerServiceSelection
             onComplete={handleServiceSelected}
@@ -243,8 +247,9 @@ export default function WorkerAuthContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4 sm:p-6 lg:p-8">
-      <motion.div 
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-800 
+                       text-gray-700 dark:text-gray-200 p-4 sm:p-6 lg:p-8">
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
@@ -265,28 +270,27 @@ export default function WorkerAuthContent() {
               </p>
             </motion.div>
           </CardHeader>
-          
+
           <CardContent className="p-4 sm:p-6 lg:p-8">
             {/* WhatsApp Status */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               className="flex items-center justify-center gap-3 text-sm mb-4 sm:mb-6 p-3 bg-blue-50 rounded-xl border border-blue-100"
             >
-              <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                whatsappStatus === 'active' ? 'bg-green-500 animate-pulse' : 
+              <div className={`w-3 h-3 rounded-full transition-all duration-300 ${whatsappStatus === 'active' ? 'bg-green-500 animate-pulse' :
                 whatsappStatus === 'inactive' ? 'bg-yellow-500' : 'bg-gray-500 animate-pulse'
-              }`} />
+                }`} />
               <span className="text-blue-700 font-medium text-xs sm:text-sm">
-                {whatsappStatus === 'active' ? 'WhatsApp OTP Active' : 
-                 whatsappStatus === 'inactive' ? 'Using Simulation Mode' : 'Checking status...'}
+                {whatsappStatus === 'active' ? 'WhatsApp OTP Active' :
+                  whatsappStatus === 'inactive' ? 'Using Simulation Mode' : 'Checking status...'}
               </span>
             </motion.div>
 
             <form onSubmit={handleAuthSubmit} className="space-y-4 sm:space-y-6">
               {/* Toggle Buttons */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -295,11 +299,10 @@ export default function WorkerAuthContent() {
                 <Button
                   type="button"
                   variant={!isRegister ? 'default' : 'outline'}
-                  className={`flex-1 text-sm sm:text-base font-medium transition-all duration-300 ${
-                    !isRegister 
-                      ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25' 
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-white'
-                  }`}
+                  className={`flex-1 text-sm sm:text-base font-medium transition-all duration-300 ${!isRegister
+                    ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-white'
+                    }`}
                   onClick={() => {
                     setIsRegister(false)
                     setError('')
@@ -314,11 +317,10 @@ export default function WorkerAuthContent() {
                 <Button
                   type="button"
                   variant={isRegister ? 'default' : 'outline'}
-                  className={`flex-1 text-sm sm:text-base font-medium transition-all duration-300 ${
-                    isRegister 
-                      ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25' 
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-white'
-                  }`}
+                  className={`flex-1 text-sm sm:text-base font-medium transition-all duration-300 ${isRegister
+                    ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-white'
+                    }`}
                   onClick={() => {
                     setIsRegister(true)
                     setError('')
@@ -357,7 +359,7 @@ export default function WorkerAuthContent() {
               </AnimatePresence>
 
               {/* Phone Field */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
@@ -375,9 +377,9 @@ export default function WorkerAuthContent() {
                   required
                 />
                 <p className="text-xs text-gray-500 sm:text-sm">
-                  {whatsappStatus === 'active' 
-                    ? 'Verification code will be sent via WhatsApp' 
-                    : 'Using simulation mode - OTP will be shown in notification'
+                  {whatsappStatus === 'active'
+                    ? 'Verification code will be sent via WhatsApp'
+                    : 'Using simulation mode - OTP will be shown in server terminal'
                   }
                 </p>
               </motion.div>
@@ -402,8 +404,8 @@ export default function WorkerAuthContent() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 active:bg-blue-800 
                             transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 
                             shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35
@@ -427,7 +429,7 @@ export default function WorkerAuthContent() {
               </motion.div>
 
               {/* Terms */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
@@ -435,8 +437,8 @@ export default function WorkerAuthContent() {
               >
                 <p className="text-xs text-gray-500 sm:text-sm">
                   By continuing, you agree to our{' '}
-                  <Link 
-                    href="/terms" 
+                  <Link
+                    href="/terms"
                     className="underline hover:text-blue-600 transition-colors duration-200 font-medium"
                   >
                     Terms of Service
@@ -448,14 +450,14 @@ export default function WorkerAuthContent() {
         </Card>
 
         {/* Back Link */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
           className="text-center mt-4 sm:mt-6"
         >
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium inline-flex items-center gap-2"
           >
             <span>←</span>
