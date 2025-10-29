@@ -135,7 +135,7 @@ export default function AdminDashboard() {
                   <div 
                     key={booking._id} 
                     className="flex items-center justify-between p-3 sm:p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200 cursor-pointer"
-                    onClick={() => router.push(`/admin/bookings/${booking._id}`)}
+                    onClick={() => router.push(`/admin/bookings`)}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">

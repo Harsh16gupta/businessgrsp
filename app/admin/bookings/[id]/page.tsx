@@ -27,7 +27,7 @@ interface BookingDetails {
       _id: string;
       name: string;
       phone: string;
-      services : string;
+      services: string;
       rating: number;
     };
   }>;
@@ -43,7 +43,7 @@ export default function BookingDetailsPage() {
 
   useEffect(() => {
     if (bookingId) {
-      console.log("Booking id is in {id} page.tsx>>>>>>>>>>>>",bookingId)
+      console.log("Booking id is in {id} page.tsx>>>>>>>>>>>>", bookingId)
       fetchBooking();
     }
   }, [bookingId]);
@@ -76,6 +76,32 @@ export default function BookingDetailsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // FIX: Get unique workers - only show the latest status for each worker
+  const getUniqueAssignments = (assignments: any[]) => {
+    const workerMap = new Map();
+    
+    // Sort by creation date (newest first) to get latest status
+    const sortedAssignments = [...assignments].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    // Keep only the latest assignment for each worker
+    sortedAssignments.forEach(assignment => {
+      const workerId = assignment.worker._id;
+      if (!workerMap.has(workerId)) {
+        workerMap.set(workerId, assignment);
+      }
+    });
+
+    return Array.from(workerMap.values());
+  };
+
+  // FIX: Get only accepted workers for counting
+  const getAcceptedWorkers = (assignments: any[]) => {
+    const uniqueAssignments = getUniqueAssignments(assignments);
+    return uniqueAssignments.filter(assignment => assignment.status === 'ACCEPTED');
   };
 
   const handleSendWorkerLinks = async () => {
@@ -145,6 +171,10 @@ export default function BookingDetailsPage() {
       </div>
     );
   }
+
+  // FIX: Use unique assignments instead of all assignments
+  const uniqueAssignments = getUniqueAssignments(booking.assignments || []);
+  const acceptedWorkersCount = getAcceptedWorkers(booking.assignments || []).length;
 
   return (
     <div className="space-y-6">
@@ -244,9 +274,24 @@ export default function BookingDetailsPage() {
         <div className="space-y-6">
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Worker Assignments</h2>
+            
+            {/* FIX: Added summary stats */}
+            <div className="mb-4 grid grid-cols-2 gap-2 text-sm">
+              <div className="text-center bg-green-50 p-2 rounded">
+                <div className="font-semibold text-green-700">{acceptedWorkersCount}</div>
+                <div className="text-green-600">Accepted</div>
+              </div>
+              <div className="text-center bg-yellow-50 p-2 rounded">
+                <div className="font-semibold text-yellow-700">
+                  {uniqueAssignments.filter(a => a.status === 'PENDING').length}
+                </div>
+                <div className="text-yellow-600">Pending</div>
+              </div>
+            </div>
+
             <div className="space-y-4">
-              {booking.assignments && booking.assignments.length > 0 ? (
-                booking.assignments.map((assignment) => (
+              {uniqueAssignments.length > 0 ? (
+                uniqueAssignments.map((assignment) => (
                   <div key={assignment._id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
@@ -266,8 +311,15 @@ export default function BookingDetailsPage() {
                       </span>
                     </div>
                     <p className="text-xs text-gray-400 mt-2">
-                      Assigned: {new Date(assignment.createdAt).toLocaleString()}
+                      {assignment.status === 'ACCEPTED' ? 'Accepted' : 'Assigned'}: {new Date(assignment.createdAt).toLocaleString()}
                     </p>
+                    
+                    {/* FIX: Show note if this worker has multiple assignments */}
+                    {booking.assignments.filter(a => a.worker._id === assignment.worker._id).length > 1 && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        ⓘ Updated from previous assignment
+                      </p>
+                    )}
                   </div>
                 ))
               ) : (
@@ -277,7 +329,7 @@ export default function BookingDetailsPage() {
             
             <div className="mt-4">
               <p className="text-sm text-gray-600">
-                {booking.assignments?.filter(a => a.status === 'ACCEPTED').length || 0} / {booking.workersNeeded} workers assigned
+                {acceptedWorkersCount} / {booking.workersNeeded} workers assigned
               </p>
             </div>
           </div>
