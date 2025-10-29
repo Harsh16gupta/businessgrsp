@@ -90,6 +90,8 @@ export default function BusinessDashboard() {
     const totalRequirements = bookingsData.length;
     const assignedRequirements = bookingsData.filter(b => b.status === 'ASSIGNED').length;
     const pendingRequirements = bookingsData.filter(b => b.status === 'PENDING').length;
+    
+    // FIX: Only count ACCEPTED assignments
     const totalWorkersAssigned = bookingsData.reduce((total, booking) => 
       total + booking.assignments.filter(a => a.status === 'ACCEPTED').length, 0
     );
@@ -100,6 +102,16 @@ export default function BusinessDashboard() {
       pendingRequirements,
       totalWorkersAssigned
     });
+  };
+
+  // FIX: Get only accepted workers
+  const getAcceptedWorkers = (assignments: any[]) => {
+    return assignments.filter(assignment => assignment.status === 'ACCEPTED');
+  };
+
+  const handleViewDetails = (bookingId: string) => {
+    // Navigate to booking details page
+    router.push(`/business/requirements/${bookingId}`);
   };
 
   const handleLogout = () => {
@@ -184,7 +196,6 @@ export default function BusinessDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
           {[
             { label: 'Total Requirements', value: stats.totalRequirements, color: 'blue', icon: '📋' },
-            { label: 'Assigned', value: stats.assignedRequirements, color: 'blue', icon: '✅' },
             { label: 'Pending', value: stats.pendingRequirements, color: 'blue', icon: '⏳' },
             { label: 'Workers Assigned', value: stats.totalWorkersAssigned, color: 'blue', icon: '👥' }
           ].map((stat, index) => (
@@ -274,66 +285,95 @@ export default function BusinessDashboard() {
             </div>
           ) : activeTab === 'overview' ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-              {bookings.slice(0, isMobile ? 2 : 4).map((booking) => (
-                <div 
-                  key={booking.id} 
-                  className="border border-gray-200 rounded-xl p-4 md:p-5 hover:shadow-md transition-all duration-300 cursor-pointer bg-white"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-semibold text-gray-900 text-base md:text-lg line-clamp-1">{booking.serviceType}</h3>
-                    {getStatusBadge(booking.status)}
-                  </div>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Workers Needed:</span>
-                      <span className="font-medium">{booking.workersNeeded}</span>
+              {bookings.slice(0, isMobile ? 2 : 4).map((booking) => {
+                // FIX: Get only accepted workers
+                const acceptedWorkers = getAcceptedWorkers(booking.assignments);
+                
+                return (
+                  <div 
+                    key={booking.id} 
+                    className="border border-gray-200 rounded-xl p-4 md:p-5 hover:shadow-md transition-all duration-300 cursor-pointer bg-white"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="font-semibold text-gray-900 text-base md:text-lg line-clamp-1">{booking.serviceType}</h3>
+                      {getStatusBadge(booking.status)}
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Duration:</span>
-                      <span className="font-medium">{booking.duration}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Location:</span>
-                      <span className="font-medium text-right max-w-[120px] truncate">{booking.location}</span>
-                    </div>
-                    {booking.negotiatedPrice && (
+                    
+                    <div className="space-y-2 mb-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Budget:</span>
-                        <span className="font-medium text-blue-600">₹{booking.negotiatedPrice}</span>
+                        <span className="text-gray-600">Workers Needed:</span>
+                        <span className="font-medium">{booking.workersNeeded}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Duration:</span>
+                        <span className="font-medium">{booking.duration}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Location:</span>
+                        <span className="font-medium text-right max-w-[120px] truncate">{booking.location}</span>
+                      </div>
+                      {booking.negotiatedPrice && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Budget:</span>
+                          <span className="font-medium text-blue-600">₹{booking.negotiatedPrice}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* FIX: Only show accepted workers */}
+                    {acceptedWorkers.length > 0 && (
+                      <div className="border-t pt-3">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          Assigned Workers ({acceptedWorkers.length}):
+                        </p>
+                        <div className="space-y-2">
+                          {acceptedWorkers.slice(0, 2).map((assignment) => (
+                            <div key={assignment.id} className="flex justify-between items-center text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium">{assignment.worker.name}</span>
+                                {assignment.worker.rating && (
+                                  <span className="text-yellow-600 text-xs">⭐ {assignment.worker.rating}</span>
+                                )}
+                              </div>
+                              <span className="text-gray-500 text-xs">{assignment.worker.phone}</span>
+                            </div>
+                          ))}
+                          {acceptedWorkers.length > 2 && (
+                            <div className="text-xs text-blue-600 font-medium">
+                              +{acceptedWorkers.length - 2} more workers
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
-                  </div>
 
-                  {booking.assignments.length > 0 && (
-                    <div className="border-t pt-3">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Assigned Workers:</p>
-                      <div className="space-y-2">
-                        {booking.assignments.slice(0, 2).map((assignment) => (
-                          <div key={assignment.id} className="flex justify-between items-center text-sm">
-                            <span className="font-medium">{assignment.worker.name}</span>
-                            <span className="text-gray-500 text-xs">{assignment.worker.phone}</span>
-                          </div>
-                        ))}
-                        {booking.assignments.length > 2 && (
-                          <div className="text-xs text-blue-600 font-medium">
-                            +{booking.assignments.length - 2} more workers
-                          </div>
-                        )}
+                    {/* FIX: Show message if no workers accepted yet */}
+                    {acceptedWorkers.length === 0 && booking.assignments.length > 0 && (
+                      <div className="border-t pt-3">
+                        <p className="text-sm font-medium text-yellow-700 mb-2">
+                          ⏳ Waiting for workers to accept
+                        </p>
+                        <div className="text-xs text-gray-500">
+                          {booking.assignments.length} worker(s) pending confirmation
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  <div className="flex justify-between items-center mt-4 pt-3 border-t">
-                    <span className="text-xs text-gray-500">
-                      {new Date(booking.createdAt).toLocaleDateString('en-IN')}
-                    </span>
-                    <button className="text-blue-600 text-xs font-medium hover:text-blue-700 transition-colors duration-200">
-                      View Details
-                    </button>
+                    <div className="flex justify-between items-center mt-4 pt-3 border-t">
+                      <span className="text-xs text-gray-500">
+                        {new Date(booking.createdAt).toLocaleDateString('en-IN')}
+                      </span>
+                      {/* FIX: Make View Details button work */}
+                      <button 
+                        onClick={() => handleViewDetails(booking.id)}
+                        className="text-blue-600 text-xs font-medium hover:text-blue-700 transition-colors duration-200 cursor-pointer"
+                      >
+                       
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -342,28 +382,48 @@ export default function BusinessDashboard() {
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-3 px-2 md:px-4 text-sm font-medium text-gray-600">Service</th>
                     <th className="text-left py-3 px-2 md:px-4 text-sm font-medium text-gray-600">Workers</th>
+                    <th className="text-left py-3 px-2 md:px-4 text-sm font-medium text-gray-600">Accepted</th>
                     <th className="text-left py-3 px-2 md:px-4 text-sm font-medium text-gray-600">Duration</th>
                     <th className="text-left py-3 px-2 md:px-4 text-sm font-medium text-gray-600">Location</th>
                     <th className="text-left py-3 px-2 md:px-4 text-sm font-medium text-gray-600">Status</th>
                     <th className="text-left py-3 px-2 md:px-4 text-sm font-medium text-gray-600">Date</th>
+                    <th className="text-left py-3 px-2 md:px-4 text-sm font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {bookings.map((booking) => (
-                    <tr 
-                      key={booking.id} 
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
-                    >
-                      <td className="py-3 px-2 md:px-4 text-sm font-medium text-gray-900">{booking.serviceType}</td>
-                      <td className="py-3 px-2 md:px-4 text-sm text-gray-600">{booking.workersNeeded}</td>
-                      <td className="py-3 px-2 md:px-4 text-sm text-gray-600">{booking.duration}</td>
-                      <td className="py-3 px-2 md:px-4 text-sm text-gray-600 max-w-[100px] truncate">{booking.location}</td>
-                      <td className="py-3 px-2 md:px-4">{getStatusBadge(booking.status)}</td>
-                      <td className="py-3 px-2 md:px-4 text-sm text-gray-600">
-                        {new Date(booking.createdAt).toLocaleDateString('en-IN')}
-                      </td>
-                    </tr>
-                  ))}
+                  {bookings.map((booking) => {
+                    const acceptedWorkers = getAcceptedWorkers(booking.assignments);
+                    return (
+                      <tr 
+                        key={booking.id} 
+                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+                      >
+                        <td className="py-3 px-2 md:px-4 text-sm font-medium text-gray-900">{booking.serviceType}</td>
+                        <td className="py-3 px-2 md:px-4 text-sm text-gray-600">{booking.workersNeeded}</td>
+                        <td className="py-3 px-2 md:px-4 text-sm text-gray-600">
+                          {acceptedWorkers.length > 0 ? (
+                            <span className="text-green-600 font-medium">{acceptedWorkers.length}</span>
+                          ) : (
+                            <span className="text-yellow-600">0</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-2 md:px-4 text-sm text-gray-600">{booking.duration}</td>
+                        <td className="py-3 px-2 md:px-4 text-sm text-gray-600 max-w-[100px] truncate">{booking.location}</td>
+                        <td className="py-3 px-2 md:px-4">{getStatusBadge(booking.status)}</td>
+                        <td className="py-3 px-2 md:px-4 text-sm text-gray-600">
+                          {new Date(booking.createdAt).toLocaleDateString('en-IN')}
+                        </td>
+                        <td className="py-3 px-2 md:px-4">
+                          <button 
+                            onClick={() => handleViewDetails(booking.id)}
+                            className="text-blue-600 text-xs font-medium hover:text-blue-700 transition-colors duration-200 cursor-pointer"
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
