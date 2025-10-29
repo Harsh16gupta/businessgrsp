@@ -22,7 +22,7 @@ export default function CreateServicePage() {
     category: '',
     basePrice: '',
     duration: '',
-    image: '/images/factory-helper.png',
+    image: '/images/services/factory-helper.png',
     tags: '',
     seoKeywords: '',
     featured: false

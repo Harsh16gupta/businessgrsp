@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Services', href: '/admin/services', icon: '🛠️' },
   { name: 'Business Bookings', href: '/admin/bookings', icon: '📋' },
   { name: 'Business Users', href: '/admin/businesses', icon: '🏢' },
+  { name: 'Wokers', href: '/admin/workers', icon: '👷‍♂️' },
 ];
 
 export default function AdminLayout({
