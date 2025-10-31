@@ -228,7 +228,7 @@ export const NavbarLogo = () => {
         <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-sm">
           <span className="text-white font-bold text-lg">G</span>
         </div>
-        <span className="font-medium text-black dark:text-white text-xl">GRSP Business</span>
+        <span className="font-medium text-black dark:text-white text-xl">GRS WORKER BUSINESS</span>
       </motion.div>
     </Link>
   );

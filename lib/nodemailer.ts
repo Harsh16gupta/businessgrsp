@@ -180,8 +180,8 @@ Submitted: ${new Date().toLocaleString('en-IN')}
 
   try {
     const result = await transporter.sendMail({
-      from: `"GRSP Business" <${process.env.SMTP_USER}>`,
-      to: 'yadavkausha4a5@gmail.com', // Your admin email
+      from: `"GRS WORKER BUSINESS" <${process.env.SMTP_USER}>`,
+      to: 'satyam.grss10@gmail.com', // Your admin email
       subject: `New Staff Requirement - ${formData.companyName}`,
       text: textContent,
       html: htmlContent,
