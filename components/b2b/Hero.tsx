@@ -19,7 +19,7 @@ export default function Hero() {
   }))
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-blue-900 pt-25">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-blue-900 pt-25 ">
       {/* Floating Gradient Lines */}
       <div className="absolute inset-0">
         {floatingLines.map((line) => (
@@ -51,33 +51,35 @@ export default function Hero() {
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-6xl mx-auto text-center">
           {/* Headline */}
+          
           <motion.h1
-            className="text-4xl md:text-6xl lg:text-7xl font-bold text-slate-900 dark:text-white mb-6 leading-tight"
+            className="text-3xl md:text-5xl lg:text-7xl font-bold text-slate-900 mb-6 "
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            Connect with{' '}
-            <span className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 bg-clip-text text-transparent">
-              Verified Professionals
+            AI-Powered Platform To Connect{' '}
+            <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+               Businesses With Verified workers
             </span>
+            
           </motion.h1>
-
+          
           {/* Subheadline */}
           <motion.p
-            className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed"
+            className="text-xl md:text-xl text-slate-600 dark:text-slate-300 mb-7 max-w-2xl mx-auto leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Find trusted services for your home or hire skilled workers for your business. All verified, all reliable.
+            AI Matching Skilled Worker For Your Hospital, Warehouse, Factory, Restaurants, Hotel , Retail Stores  And many more
           </motion.p>
 
           {/* Enhanced CTA Buttons - Primary buttons in one row */}
           <motion.div
-            className="flex flex-col xs:flex-row gap-3 justify-center items-center mb-4 sm:mb-6 max-w-md mx-auto"
+            className="flex flex-col xs:flex-row gap-3 justify-center items-center mb-2 sm:mb-6 max-w-md mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
@@ -95,7 +97,7 @@ export default function Hero() {
               
               <motion.button
                 onClick={() => router.push('/contact')}
-                className="flex-1 xs:flex-none px-6 py-3.5 bg-white text-slate-700 rounded-2xl font-medium text-sm sm:text-base border border-slate-300 hover:border-slate-400 transition-all duration-300 hover:bg-slate-50/80 shadow-sm hover:shadow-md"
+                className="flex-1 xs:flex-none px-4 py-3.5 bg-white text-slate-700 rounded-2xl font-medium text-sm sm:text-base border border-slate-300 hover:border-slate-400 transition-all duration-300 hover:bg-slate-50/80 shadow-sm hover:shadow-md"
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -106,7 +108,7 @@ export default function Hero() {
 
           {/* Download Button - Separate row */}
           <motion.div
-            className="flex justify-center mb-8 sm:mb-12"
+            className="flex justify-center mb-4 sm:mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
@@ -124,7 +126,7 @@ export default function Hero() {
           </motion.div>
           {/* Enhanced Trust Indicators */}
           <motion.div
-            className="mt-8 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-slate-500 text-xs sm:text-sm"
+            className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-slate-500 text-xs sm:text-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
@@ -143,7 +145,7 @@ export default function Hero() {
 
           {/* Additional Premium Feature */}
           <motion.div
-            className="mt-6 sm:mt-8"
+            className="mt-4 sm:mt-5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.8 }}

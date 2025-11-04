@@ -7,9 +7,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    serverComponentsExternalPackages: [],
-  }
-}
+  serverExternalPackages: [], // ✅ moved here from experimental
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
