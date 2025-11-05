@@ -134,7 +134,6 @@ export default function WorkerAuthContent() {
     setLoading(true)
     setError('')
 
-    // Show loading toast
     const loadingToast = toast.loading('Sending OTP...')
 
     try {
@@ -160,13 +159,11 @@ export default function WorkerAuthContent() {
       const data = await response.json()
 
       if (data.success) {
-        // Dismiss loading toast first
         toast.dismiss(loadingToast)
-        // Show OTP toast with the actual OTP from API response
         if (data.debugOtp) {
           toast.success('OTP Sent Successfully!', {
             description: `Your OTP is ${data.debugOtp}. Use this to verify.`,
-            duration: 15000, // 15 seconds to give user time to see it
+            duration: 15000,
             action: {
               label: 'Copy OTP',
               onClick: () => {
@@ -198,7 +195,6 @@ export default function WorkerAuthContent() {
           }
         }
 
-        // Add a small delay before redirecting to ensure toast is visible
         setTimeout(() => {
           router.push(`/verify?${params.toString()}`)
         }, 1000)
@@ -227,82 +223,117 @@ export default function WorkerAuthContent() {
 
   if (step === 'service') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-white dark:bg-gray-800 
-                       text-gray-700 dark:text-gray-200 sm:p-6 pt-10">
-        <div className="w-full max-w-lg mx-auto">
-          <WorkerServiceSelection
-            onComplete={handleServiceSelected}
-            onBack={() => {
-              setStep('auth')
-              toast.info('Back to Profile', {
-                description: 'You can modify your profile details',
-                duration: 3000,
-              })
-            }}
-            singleSelection={true}
-          />
-        </div>
+      <div className="flex items-center justify-center p-3  
+                     text-gray-900 sm:p-4 ">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-full max-w-4xl mx-auto"
+        >
+          <div className="text-center ">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-3xl sm:text-4xl font-light text-gray-900 mb-1 tracking-tight"
+            >
+              Choose Your <span className="font-medium">Service</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed"
+            >
+              Select the service you specialize in to match with relevant opportunities
+            </motion.p>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <WorkerServiceSelection
+              onComplete={handleServiceSelected}
+              onBack={() => {
+                setStep('auth')
+                toast.info('Back to Profile', {
+                  description: 'You can modify your profile details',
+                  duration: 3000,
+                })
+              }}
+              singleSelection={true}
+            />
+          </motion.div>
+        </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-800 
-                       text-gray-700 dark:text-gray-200 p-4 sm:p-6 lg:p-8">
+    <div className="flex items-center justify-center  
+                   text-gray-900 p-3 sm:p-4 lg:p-5">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         className="w-full max-w-md mx-auto"
       >
-        <Card className="shadow-xl border border-gray-100 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
-          <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white py-6 sm:py-8 px-4 sm:px-6">
+        {/* Main Card */}
+        <Card className="shadow-2xl border-0 rounded-3xl overflow-hidden bg-white/80 backdrop-blur-sm">
+          <CardHeader className="text-center py-8 px-6 bg-gradient-to-b from-white to-gray-50/80 border-b border-gray-100">
             <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.1, duration: 0.3 }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.4 }}
             >
-              <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">
+              <CardTitle className="text-2xl sm:text-3xl font-light tracking-tight text-gray-900 mb-2">
                 {isRegister ? 'Join Our Team' : 'Welcome Back'}
               </CardTitle>
-              <p className="text-blue-100 mt-2 text-sm sm:text-base lg:text-lg">
+              <p className="text-gray-600 text-base font-light">
                 {isRegister ? 'Start your professional journey' : 'Access your worker account'}
               </p>
             </motion.div>
           </CardHeader>
 
-          <CardContent className="p-4 sm:p-6 lg:p-8">
+          <CardContent className="p-6 sm:p-8">
             {/* WhatsApp Status */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="flex items-center justify-center gap-3 text-sm mb-4 sm:mb-6 p-3 bg-blue-50 rounded-xl border border-blue-100"
+              className="flex items-center justify-center gap-3 text-sm mb-6 p-3 bg-blue-50/50 rounded-2xl border border-blue-100/50 backdrop-blur-sm"
             >
-              <div className={`w-3 h-3 rounded-full transition-all duration-300 ${whatsappStatus === 'active' ? 'bg-green-500 animate-pulse' :
-                whatsappStatus === 'inactive' ? 'bg-yellow-500' : 'bg-gray-500 animate-pulse'
-                }`} />
-              <span className="text-blue-700 font-medium text-xs sm:text-sm">
+              <div className={`w-2.5 h-2.5 rounded-full transition-all duration-500 ${
+                whatsappStatus === 'active' ? 'bg-green-500 animate-pulse' :
+                whatsappStatus === 'inactive' ? 'bg-amber-500' : 
+                'bg-gray-400 animate-pulse'
+              }`} />
+              <span className="text-blue-800/80 font-medium text-xs">
                 {whatsappStatus === 'active' ? 'WhatsApp OTP Active' :
-                  whatsappStatus === 'inactive' ? 'Using Simulation Mode' : 'Checking status...'}
+                 whatsappStatus === 'inactive' ? 'Using Simulation Mode' : 
+                 'Checking status...'}
               </span>
             </motion.div>
 
-            <form onSubmit={handleAuthSubmit} className="space-y-4 sm:space-y-6">
+            <form onSubmit={handleAuthSubmit} className="space-y-5">
               {/* Toggle Buttons */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex gap-2 p-1 bg-gray-100 rounded-xl border border-gray-200"
+                className="flex gap-1 p-1 bg-gray-100/50 rounded-2xl border border-gray-200/50 backdrop-blur-sm"
               >
                 <Button
                   type="button"
-                  variant={!isRegister ? 'default' : 'outline'}
-                  className={`flex-1 text-sm sm:text-base font-medium transition-all duration-300 ${!isRegister
-                    ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white'
-                    }`}
+                  variant={!isRegister ? 'default' : 'ghost'}
+                  className={`flex-1 text-sm font-medium transition-all duration-300 rounded-xl ${
+                    !isRegister
+                      ? 'bg-white shadow-sm text-gray-900 border border-gray-200/50 hover:bg-white'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-transparent'
+                  }`}
                   onClick={() => {
                     setIsRegister(false)
                     setError('')
@@ -316,11 +347,12 @@ export default function WorkerAuthContent() {
                 </Button>
                 <Button
                   type="button"
-                  variant={isRegister ? 'default' : 'outline'}
-                  className={`flex-1 text-sm sm:text-base font-medium transition-all duration-300 ${isRegister
-                    ? 'bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/25'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white'
-                    }`}
+                  variant={isRegister ? 'default' : 'ghost'}
+                  className={`flex-1 text-sm font-medium transition-all duration-300 rounded-xl ${
+                    isRegister
+                      ? 'bg-white shadow-sm text-gray-900 border border-gray-200/50 hover:bg-white'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-transparent'
+                  }`}
                   onClick={() => {
                     setIsRegister(true)
                     setError('')
@@ -345,13 +377,13 @@ export default function WorkerAuthContent() {
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                     className="space-y-2"
                   >
-                    <label className="text-sm font-medium text-gray-700 sm:text-base">Full Name</label>
+                    <label className="text-sm font-medium text-gray-700">Full Name</label>
                     <Input
                       placeholder="Enter your full name"
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       disabled={loading}
-                      className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300 rounded-xl"
+                      className="h-12 text-base border-gray-200 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all duration-300 rounded-xl bg-white/50 backdrop-blur-sm"
                       required
                     />
                   </motion.div>
@@ -365,7 +397,7 @@ export default function WorkerAuthContent() {
                 transition={{ delay: 0.4 }}
                 className="space-y-2"
               >
-                <label className="text-sm font-medium text-gray-700 sm:text-base">Phone Number</label>
+                <label className="text-sm font-medium text-gray-700">Phone Number</label>
                 <Input
                   placeholder="10-digit phone number"
                   value={formData.phone}
@@ -373,13 +405,13 @@ export default function WorkerAuthContent() {
                   disabled={loading}
                   maxLength={10}
                   type="tel"
-                  className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300 rounded-xl"
+                  className="h-12 text-base border-gray-200 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all duration-300 rounded-xl bg-white/50 backdrop-blur-sm"
                   required
                 />
-                <p className="text-xs text-gray-500 sm:text-sm">
+                <p className="text-xs text-gray-500 font-light">
                   {whatsappStatus === 'active'
                     ? 'Verification code will be sent via WhatsApp'
-                    : 'Using simulation mode - OTP will be shown in server terminal'
+                    : 'Using simulation mode - OTP will be shown in notification'
                   }
                 </p>
               </motion.div>
@@ -391,7 +423,7 @@ export default function WorkerAuthContent() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm sm:text-base transition-all duration-300"
+                    className="bg-red-50/80 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm backdrop-blur-sm transition-all duration-300"
                   >
                     {error}
                   </motion.div>
@@ -406,22 +438,21 @@ export default function WorkerAuthContent() {
               >
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 active:bg-blue-800 
+                  className="w-full h-12 text-base font-medium bg-gray-900 hover:bg-gray-800 active:bg-gray-950 
                             transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 
-                            shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35
-                            rounded-xl border-0"
+                            shadow-lg hover:shadow-xl rounded-xl border-0 text-white"
                   disabled={loading}
                   size="lg"
                 >
                   {loading ? (
                     <div className="flex items-center gap-3">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-                      <span className="text-sm sm:text-base">
+                      <span className="text-sm">
                         {isRegister ? 'Processing...' : 'Sending OTP...'}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-sm sm:text-base">
+                    <span className="text-sm">
                       {isRegister ? 'Continue to Service Selection' : 'Send OTP'}
                     </span>
                   )}
@@ -433,13 +464,13 @@ export default function WorkerAuthContent() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
-                className="text-center pt-4 border-t border-gray-200"
+                className="text-center pt-4 border-t border-gray-200/50"
               >
-                <p className="text-xs text-gray-500 sm:text-sm">
+                <p className="text-xs text-gray-500 font-light">
                   By continuing, you agree to our{' '}
                   <Link
                     href="/terms"
-                    className="underline hover:text-blue-600 transition-colors duration-200 font-medium"
+                    className="underline hover:text-gray-700 transition-colors duration-200 font-medium"
                   >
                     Terms of Service
                   </Link>
@@ -454,13 +485,13 @@ export default function WorkerAuthContent() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="text-center mt-4 sm:mt-6"
+          className="text-center mt-6"
         >
           <Link
             href="/"
-            className="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium inline-flex items-center gap-2"
+            className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200 font-light inline-flex items-center gap-2 group"
           >
-            <span>←</span>
+            <span className="group-hover:-translate-x-0.5 transition-transform duration-200">←</span>
             <span>Back to Home</span>
           </Link>
         </motion.div>
@@ -475,9 +506,9 @@ export default function WorkerAuthContent() {
               className="text-center mt-4"
             >
               <div className="flex items-center justify-center space-x-3 text-sm text-gray-500">
-                <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
-                  <span className="text-xs sm:text-sm font-medium">Step 1 of 2</span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
+                  <span className="text-xs font-light">Step 1 of 2</span>
                 </div>
               </div>
             </motion.div>

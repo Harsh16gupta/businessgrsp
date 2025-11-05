@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-800 transition-colors duration-300 mt-6">
-      <div className="flex justify-center mt-8">
+    <div className="min-h-screen bg-white dark:bg-gray-800 transition-colors duration-300 mt-20 lg-mt-25">
+      <div className="flex justify-center ">
         <Link href="/business-auth">
           <Button
             variant="outline"
