@@ -110,7 +110,7 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
+                    <Link href="/requirement-form" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
                       <IconUsers className="w-4 h-4" />
                       Find Workers
                     </Link>

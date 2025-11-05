@@ -125,7 +125,7 @@ const TermsAndConditions = () => {
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200 text-center">
             <p className="text-gray-600">
-              &copy; {new Date().getFullYear()} GRSWORKER. All rights reserved.
+              &copy; {new Date().getFullYear()} GRSWORKER BUSINESS. All rights reserved.
             </p>
           </div>
         </div>

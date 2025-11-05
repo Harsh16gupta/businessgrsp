@@ -80,26 +80,36 @@ export default function GRSWorkerFAQs() {
     },
     {
       id: 'q12',
-      question: 'What data and reporting do you provide?',
-      answer: 'We provide dashboards showing shift fill rates, worker ratings, cost per shift, repeat worker metrics, no-show statistics, worker profile usage, and cost-savings analytics. This helps you measure ROI and optimise future staffing. Our tech-platform approach (similar to Meraqui\'s Workforce OS) makes this possible.'
+      question: 'Can I hire operators for specific machines or equipment?',
+      answer: 'Yes. GRS Worker provides trained operators for CNC, lathe, press, packaging, injection molding, Turbine, boiler, and forklift machines. We also ensure that operators are safety-trained and experienced.'
+    },
+    {
+      id: 'q13',
+      question: 'How do you verify construction and industrial workers?',
+      answer: 'Every worker\'s Aadhaar ID, trade skill, experience certificate, and safety training are verified. For certain categories, we also check site-safety and PPE compliance'
+    },
+    {
+      id: 'q14',
+      question: 'How can hotels and restaurants hire temporary cooks, servers, or cleaners fast?',
+      answer: 'Through GRS Worker, hospitality businesses can instantly book temporary cooks, bartenders, dishwashers, room boys, servers, and housekeeping staff. We provide verified, experienced workers ready for events, peak seasons, or daily operations.'
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8 pt-25">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 lg:pt-35">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-12 lg:mb-16 px-2 sm:px-4">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight">
             GRS Worker – Business Client FAQs
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
             Everything you need to know about our workforce-as-a-service platform and how it can transform your staffing operations.
           </p>
         </div>
 
         {/* FAQ Section */}
-        <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
           {faqs.map((faq, index) => (
             <div
               key={faq.id}
@@ -109,21 +119,21 @@ export default function GRSWorkerFAQs() {
             >
               <button
                 onClick={() => toggleItem(faq.id)}
-                className="w-full px-6 py-6 text-left flex justify-between items-center hover:bg-gray-50/50 transition-colors duration-200"
+                className="w-full px-4 sm:px-6 py-4 sm:py-6 text-left flex justify-between items-start sm:items-center hover:bg-gray-50/50 transition-colors duration-200 gap-3"
               >
-                <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold text-sm">
+                <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
+                  <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-0.5">
+                    <span className="text-blue-600 font-semibold text-xs sm:text-sm">
                       {index + 1}
                     </span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 pr-8">
+                  <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 pr-2 sm:pr-8 leading-relaxed sm:leading-normal break-words">
                     {faq.question}
                   </h3>
                 </div>
-                <div className="flex-shrink-0 ml-4">
+                <div className="flex-shrink-0 ml-2 sm:ml-4 mt-0.5 sm:mt-0">
                   <svg
-                    className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                    className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-500 transition-transform duration-200 ${
                       openItems.has(faq.id) ? 'rotate-180' : ''
                     }`}
                     fill="none"
@@ -141,10 +151,10 @@ export default function GRSWorkerFAQs() {
               </button>
               
               {openItems.has(faq.id) && (
-                <div className="px-6 pb-6 ml-12">
+                <div className="px-4 sm:px-6 pb-4 sm:pb-6 ml-9 sm:ml-12 mr-4 sm:mr-6">
                   <div className="prose prose-blue max-w-none">
                     {faq.answer.split('\n').map((paragraph, idx) => (
-                      <p key={idx} className="text-gray-700 mb-3 last:mb-0">
+                      <p key={idx} className="text-gray-700 text-sm sm:text-base mb-3 last:mb-0 leading-relaxed">
                         {paragraph}
                       </p>
                     ))}
