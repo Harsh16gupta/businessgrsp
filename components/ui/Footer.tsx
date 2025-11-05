@@ -87,7 +87,7 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="https://grsworker.com/worker-resources" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
+                    <Link href="https://grsworker.com/worker-resource" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
                       <IconBook className="w-4 h-4" />
                       Resources
                     </Link>
