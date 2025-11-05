@@ -9,7 +9,7 @@ const PrivacyPolicy = () => {
         {/* Header */}
         <div className="bg-green-600 text-white px-6 py-4">
           <h1 className="text-2xl font-bold text-center">PRIVACY POLICY</h1>
-          <p className="text-center text-green-100 mt-2">GRSWORKER PLATFORM</p>
+          <p className="text-center text-green-100 mt-2">GRSWORKER BUSINESS PLATFORM</p>
         </div>
 
         <div className="px-6 py-8">
@@ -168,8 +168,8 @@ const PrivacyPolicy = () => {
               </p>
               <p className="text-gray-700 leading-relaxed mt-2">
                 <strong>GRS Data Protection Officer</strong><br />
-                Email: privacy@grsworker.com<br />
-                Phone: +91-6394302301
+                Email: info@grsworker.com<br />
+                Phone: +91 9555602536
               </p>
             </div>
           </section>
@@ -177,7 +177,7 @@ const PrivacyPolicy = () => {
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200 text-center">
             <p className="text-gray-600">
-              &copy; {new Date().getFullYear()} GRSWORKER. All rights reserved.
+              &copy; {new Date().getFullYear()} GRSWORKER BUSINESS. All rights reserved.
             </p>
           </div>
         </div>
