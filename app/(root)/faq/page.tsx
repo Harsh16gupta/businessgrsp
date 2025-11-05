@@ -80,8 +80,18 @@ export default function GRSWorkerFAQs() {
     },
     {
       id: 'q12',
-      question: 'What data and reporting do you provide?',
-      answer: 'We provide dashboards showing shift fill rates, worker ratings, cost per shift, repeat worker metrics, no-show statistics, worker profile usage, and cost-savings analytics. This helps you measure ROI and optimise future staffing. Our tech-platform approach (similar to Meraqui\'s Workforce OS) makes this possible.'
+      question: 'Can I hire operators for specific machines or equipment?',
+      answer: 'Yes. GRS Worker provides trained operators for CNC, lathe, press, packaging, injection molding, Turbine, boiler, and forklift machines. We also ensure that operators are safety-trained and experienced.'
+    },
+    {
+      id: 'q13',
+      question: 'How do you verify construction and industrial workers?',
+      answer: 'Every worker’s Aadhaar ID, trade skill, experience certificate, and safety training are verified. For certain categories, we also check site-safety and PPE compliance'
+    },
+    {
+      id: 'q14',
+      question: 'How can hotels and restaurants hire temporary cooks, servers, or cleaners fast?',
+      answer: 'Through GRS Worker, hospitality businesses can instantly book temporary cooks, bartenders, dishwashers, room boys, servers, and housekeeping staff. We provide verified, experienced workers ready for events, peak seasons, or daily operations.'
     }
   ];
 
