@@ -143,7 +143,7 @@ export default function WorkerRegistrationPage() {
 
                 {/* CTA Button */}
                 <motion.a
-                  href=""
+                  href="https://grsworker.com/worker-register"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="inline-flex items-center justify-center w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group/btn"
@@ -215,7 +215,7 @@ export default function WorkerRegistrationPage() {
 
                 {/* CTA Button */}
                 <motion.a
-                  href="/register/business-worker"
+                  href="/"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="inline-flex items-center justify-center w-full bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group/btn"

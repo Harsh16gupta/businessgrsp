@@ -7,7 +7,7 @@ import {
   IconFileDescription, 
   IconUsers, 
   IconBuilding, 
-  IconBrandTwitter, 
+  IconBrandYoutube, 
   IconBrandLinkedin, 
   IconBrandInstagram, 
   IconBrandFacebook 
@@ -41,11 +41,11 @@ export default function Footer() {
                 <IconBrandFacebook className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-blue-600" />
               </a>
               <a 
-                href="" 
+                href="https://youtube.com/@grsworker?si=th432W69HAtCAZP6" 
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-muted hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
-                aria-label="Twitter"
+                aria-label="Youtube"
               >
-                <IconBrandTwitter className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-blue-400" />
+                <IconBrandYoutube className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-blue-400" />
               </a>
               <a 
                 href="https://www.instagram.com/grs.vacancy/?utm_source=qr&igsh=aGNqaWVlZ25weXVu#" 
@@ -75,29 +75,24 @@ export default function Footer() {
                 </h3>
                 <ul className="space-y-3">
                   <li>
-                    <Link href="/workers/find-work" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
+                    <Link href="https://grsworker.com/worker" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
                       <IconBriefcase className="w-4 h-4" />
                       Find Work
                     </Link>
                   </li>
                   <li>
-                    <Link href="/workers/create-profile" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
+                    <Link href="https://grsworker.com/worker-register" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
                       <IconUserPlus className="w-4 h-4" />
                       Create Profile
                     </Link>
                   </li>
                   <li>
-                    <Link href="/workers/resources" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
+                    <Link href="https://grsworker.com/worker-resource" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
                       <IconBook className="w-4 h-4" />
                       Resources
                     </Link>
                   </li>
-                  <li>
-                    <Link href="/workers/faq" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
-                      <IconHelp className="w-4 h-4" />
-                      Worker FAQ
-                    </Link>
-                  </li>
+                  
                 </ul>
               </div>
 
@@ -109,29 +104,24 @@ export default function Footer() {
                 </h3>
                 <ul className="space-y-3">
                   <li>
-                    <Link href="/business/post-job" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
+                    <Link href="/requirement-form" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
                       <IconFileDescription className="w-4 h-4" />
                       Post a Job
                     </Link>
                   </li>
                   <li>
-                    <Link href="/business/find-workers" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
+                    <Link href="/requirement-form" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
                       <IconUsers className="w-4 h-4" />
                       Find Workers
                     </Link>
                   </li>
                   <li>
-                    <Link href="/business/resources" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
+                    <Link href="/faq" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
                       <IconBook className="w-4 h-4" />
-                      Resources
+                      faq
                     </Link>
                   </li>
-                  <li>
-                    <Link href="/business/faq" className="text-base text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2">
-                      <IconHelp className="w-4 h-4" />
-                      Business FAQ
-                    </Link>
-                  </li>
+                  
                 </ul>
               </div>
             </div>
@@ -144,15 +134,13 @@ export default function Footer() {
             &copy; {currentYear} GRSP. All rights reserved.
           </p>
           <div className="flex gap-6 text-base text-muted-foreground">
-            <Link href="/privacy" className="hover:text-foreground transition-colors duration-200">
+            <Link href="/privacy-policy" className="hover:text-foreground transition-colors duration-200">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors duration-200">
+            <Link href="/terms-and-conditions" className="hover:text-foreground transition-colors duration-200">
               Terms of Service
             </Link>
-            <Link href="/cookies" className="hover:text-foreground transition-colors duration-200">
-              Cookie Policy
-            </Link>
+            
           </div>
         </div>
       </div>

@@ -7,9 +7,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    serverComponentsExternalPackages: [],
-  }
-}
+  images: {
+    qualities: [75, 90], // ✅ Add allowed image qualities
+  },
+  serverExternalPackages: [], // ✅ Safe placement for server external packages
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

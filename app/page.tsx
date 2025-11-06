@@ -7,6 +7,7 @@ import WhyChooseUs from '@/components/b2b/WhyChooseUs';
 import Testimonials from '@/components/b2b/Testimonials';
 import CTASection from '@/components/b2b/CTASection';
 import Link from 'next/link';
+import TrustedBySection from '@/components/sections/TrustedBySection';
 
 export default function Home() {
   const formRef = useRef<HTMLDivElement>(null);
@@ -40,6 +41,7 @@ export default function Home() {
       
       <WhyChooseUs />
       <Testimonials />
+      <TrustedBySection />
       <CTASection onGetStarted={scrollToForm} />
     </div>
   );
