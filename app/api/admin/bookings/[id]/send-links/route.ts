@@ -17,7 +17,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             return NextResponse.json({ error: 'Booking ID missing' }, { status: 400 });
         }
 
+        // Parse request body for payment amount
+        const body = await request.json();
+        const paymentAmount = body.paymentAmount as number | undefined;
+
         console.log("Booking id exist, this is id send-links :::::::::::::::::", id);
+        console.log("Payment amount:", paymentAmount);
 
         // Get the booking with business details
         const booking = await prisma.businessBooking.findUnique({
@@ -120,6 +125,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             console.error('❌ Error creating assignment records:', assignmentError);
         }
 
+        // Update booking with payment amount if provided
+        if (paymentAmount) {
+            const amountPerWorker = paymentAmount / booking.workersNeeded;
+            
+            await prisma.businessBooking.update({
+                where: { id },
+                data: {
+                    paymentAmount: paymentAmount,
+                    amountPerWorker: amountPerWorker
+                }
+            });
+            console.log(`💰 Updated booking with payment amount: ₹${paymentAmount} (₹${amountPerWorker}/worker)`);
+        }
+
         // Generate accept token if not exists
         let acceptToken = booking.acceptToken;
         if (!acceptToken) {
@@ -139,8 +158,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         const acceptLink = `${baseUrl}/worker/accept-booking?token=${acceptToken}`;
         console.log("link to accept is :::::::", acceptLink);
 
-        // Send WhatsApp messages to workers
-        const message = `
+        // Calculate payment details for message
+        const amountPerWorker = paymentAmount ? (paymentAmount / booking.workersNeeded).toFixed(2) : null;
+
+        // Create WhatsApp message with payment information
+        let message = `
 🛠️ *NEW BUSINESS BOOKING REQUEST!*
 
 *Service:* ${booking.serviceType}
@@ -149,7 +171,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 *Location:* ${booking.location}
 *Workers Needed:* ${booking.workersNeeded}
 *Duration:* ${booking.duration}
+`;
 
+        // Add payment information if available
+        if (paymentAmount && amountPerWorker) {
+            message += `
+💰 *Payment Details:*
+*Total Amount:* ₹${paymentAmount}
+*Amount Per Worker:* ₹${amountPerWorker}
+`;
+        }
+
+        message += `
 ⏰ *Accept within 1 hour:* 
 ${acceptLink}
 
@@ -177,11 +210,13 @@ ${acceptLink}
 
         return NextResponse.json({
             success: true,
-            message: `Booking links sent to ${sentCount} workers${failedSends.length > 0 ? `, failed for ${failedSends.length} workers` : ''}`,
+            message: `Booking links sent to ${sentCount} workers${failedSends.length > 0 ? `, failed for ${failedSends.length} workers` : ''}${paymentAmount ? ` with payment amount: ₹${paymentAmount}` : ''}`,
             data: {
                 workersNotified: sentCount,
                 totalWorkers: workers.length,
                 failedSends: failedSends,
+                paymentAmount: paymentAmount,
+                amountPerWorker: amountPerWorker,
                 workersFound: workers.map(w => ({ 
                     name: w.name, 
                     phone: w.phone, 

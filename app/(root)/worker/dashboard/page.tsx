@@ -14,7 +14,10 @@ import {
   FiUser,
   FiCalendar,
   FiMapPin,
-  FiDollarSign
+  FiDollarSign,
+  FiCreditCard,
+  FiEdit3,
+  FiSave
 } from 'react-icons/fi';
 import NotificationsPanel from '@/components/bookings/NotificationsPanel';
 
@@ -33,7 +36,21 @@ interface Booking {
   address: string;
   status: string;
   totalAmount: number;
+  workerEarnings?: number;
   specialNotes?: string;
+  paymentStatus?: 'PENDING' | 'PROCESSING' | 'PAID';
+  // ADD THESE FIELDS FOR ADMIN PRICES
+  amountPerWorker?: number;
+  numberOfDays?: number;
+  paymentAmount?: number;
+  workersNeeded?: number;
+}
+
+interface PaymentDetails {
+  upiId: string;
+  phoneNumber: string;
+  bankAccount?: string;
+  ifscCode?: string;
 }
 
 interface NotificationData {
@@ -53,6 +70,9 @@ interface NotificationData {
         name: string;
         phone: string;
       };
+      paymentAmount?: number;
+      numberOfDays?: number;
+      amountPerWorker?: number; // Add this
     };
   }>;
   availableBookings: Array<{
@@ -66,6 +86,9 @@ interface NotificationData {
       companyName: string;
       name: string;
     };
+    paymentAmount?: number;
+    numberOfDays?: number;
+    amountPerWorker?: number; // Add this
   }>;
   totalPending: number;
   totalAvailable: number;
@@ -128,6 +151,25 @@ const getStatusConfig = (status: string) => {
   return configs[status as keyof typeof configs] || configs.PENDING;
 };
 
+const getPaymentStatusConfig = (status: string) => {
+  const configs = {
+    PENDING: {
+      color: 'bg-amber-500/10 text-amber-700 border-amber-200',
+      label: 'Payment Pending'
+    },
+    PROCESSING: {
+      color: 'bg-blue-500/10 text-blue-700 border-blue-200',
+      label: 'Processing Payment'
+    },
+    PAID: {
+      color: 'bg-green-500/10 text-green-700 border-green-200',
+      label: 'Payment Completed'
+    }
+  };
+
+  return configs[status as keyof typeof configs] || configs.PENDING;
+};
+
 export default function WorkerDashboard() {
   const router = useRouter();
   const [worker, setWorker] = useState<any>(null);
@@ -136,6 +178,16 @@ export default function WorkerDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
+    upiId: '',
+    phoneNumber: '',
+    bankAccount: '',
+    ifscCode: ''
+  });
+  const [savingPayment, setSavingPayment] = useState(false);
+  
+  const [acceptedBookings, setAcceptedBookings] = useState<Set<string>>(new Set());
 
   const fetchWorkerData = useCallback(async (workerId: string) => {
     try {
@@ -150,6 +202,7 @@ export default function WorkerDashboard() {
       const notificationsResult = await notificationsResponse.json();
 
       if (bookingsResult.success) {
+        console.log('📊 Bookings data:', bookingsResult.data); // Debug log
         setBookings(bookingsResult.data);
       } else {
         console.error('Failed to fetch bookings:', bookingsResult.error);
@@ -160,8 +213,35 @@ export default function WorkerDashboard() {
       } else {
         console.error('Failed to fetch notifications:', notificationsResult.error);
       }
+
+      // Fetch payment details with proper error handling
+      try {
+        const paymentResponse = await fetch(`/api/worker/payment-details?workerId=${workerId}`);
+        if (paymentResponse.ok) {
+          const paymentResult = await paymentResponse.json();
+          if (paymentResult.success) {
+            setPaymentDetails(paymentResult.data);
+          }
+        } else {
+          console.warn('Payment details endpoint not available yet');
+          setPaymentDetails({
+            upiId: '',
+            phoneNumber: '',
+            bankAccount: '',
+            ifscCode: ''
+          });
+        }
+      } catch (paymentError) {
+        console.warn('Payment details fetch failed:', paymentError);
+        setPaymentDetails({
+          upiId: '',
+          phoneNumber: '',
+          bankAccount: '',
+          ifscCode: ''
+        });
+      }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching worker data:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -183,37 +263,12 @@ export default function WorkerDashboard() {
     }
   }, [router, fetchWorkerData]);
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && worker && !refreshing) {
-        fetchWorkerData(worker.id);
-      }
-    };
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'workerDataUpdated' && worker && !refreshing) {
-        fetchWorkerData(worker.id);
-        localStorage.removeItem('workerDataUpdated');
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [worker, refreshing, fetchWorkerData]);
-
-  const handleRefresh = () => {
-    if (worker) {
-      fetchWorkerData(worker.id);
-    }
-  };
-
-  const handleAcceptBooking = async (token: string) => {
+  const handleAcceptBooking = async (token: string, bookingData?: any) => {
     try {
+      if (bookingData?.id) {
+        setAcceptedBookings(prev => new Set(prev.add(bookingData.id)));
+      }
+
       const newWindow = window.open(`/worker/accept-booking?token=${token}`, '_blank');
 
       if (newWindow) {
@@ -234,6 +289,111 @@ export default function WorkerDashboard() {
     }
   };
 
+  const handleSavePaymentDetails = async () => {
+    if (!worker) return;
+
+    setSavingPayment(true);
+    try {
+      const response = await fetch('/api/worker/payment-details', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workerId: worker.id,
+          ...paymentDetails
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setEditingPayment(false);
+      } else {
+        console.error('Failed to save payment details:', result.error);
+      }
+    } catch (error) {
+      console.error('Error saving payment details:', error);
+    } finally {
+      setSavingPayment(false);
+    }
+  };
+
+  // FIXED: Correct earnings calculation
+const calculateEarnings = (booking: any) => {
+  console.log('💰 Calculating earnings for booking:', {
+    id: booking.id,
+    amountPerWorker: booking.amountPerWorker,
+    numberOfDays: booking.numberOfDays,
+    paymentAmount: booking.paymentAmount,
+    workersNeeded: booking.workersNeeded,
+    totalAmount: booking.totalAmount
+  });
+
+  // Priority 1: Use admin-entered amountPerWorker (this is TOTAL per worker for the entire job)
+  if (booking.amountPerWorker && booking.numberOfDays) {
+    const total = booking.amountPerWorker;
+    const daily = booking.amountPerWorker / booking.numberOfDays;
+    console.log('✅ Using admin price:', { daily, total, days: booking.numberOfDays });
+    return {
+      daily: Math.round(daily),
+      total: Math.round(total),
+      days: booking.numberOfDays,
+      isAdminPrice: true,
+      source: 'admin'
+    };
+  }
+  
+  // Priority 2: Use workerEarnings if specified (this is TOTAL for the worker)
+  if (booking.workerEarnings) {
+    console.log('✅ Using worker earnings:', booking.workerEarnings);
+    return {
+      daily: booking.workerEarnings,
+      total: booking.workerEarnings,
+      days: 1,
+      isAdminPrice: false,
+      source: 'worker'
+    };
+  }
+  
+  // Priority 3: Calculate from total payment amount divided by workers
+  if (booking.paymentAmount && booking.workersNeeded) {
+    const perWorkerTotal = booking.paymentAmount / booking.workersNeeded;
+    const days = booking.numberOfDays || 1;
+    const perWorkerPerDay = perWorkerTotal / days;
+    console.log('✅ Calculated from total:', { 
+      perWorkerTotal, 
+      perWorkerPerDay, 
+      days 
+    });
+    return {
+      daily: Math.round(perWorkerPerDay),
+      total: Math.round(perWorkerTotal),
+      days: days,
+      isAdminPrice: false,
+      source: 'calculated'
+    };
+  }
+  
+  // Fallback: Use totalAmount (assuming this is for one worker)
+  console.log('⚠️ Using fallback amount:', booking.totalAmount);
+  return {
+    daily: booking.totalAmount || 0,
+    total: booking.totalAmount || 0,
+    days: 1,
+    isAdminPrice: false,
+    source: 'fallback'
+  };
+};
+
+  const totalEarnings = bookings
+    .filter(booking => booking.status === 'COMPLETED' && booking.paymentStatus === 'PAID')
+    .reduce((sum, booking) => sum + calculateEarnings(booking).total, 0);
+
+  const pendingEarnings = bookings
+    .filter(booking => booking.status === 'COMPLETED' && booking.paymentStatus !== 'PAID')
+    .reduce((sum, booking) => sum + calculateEarnings(booking).total, 0);
+
   // Stats calculation
   const stats = [
     {
@@ -243,14 +403,14 @@ export default function WorkerDashboard() {
       icon: FiCalendar
     },
     {
-      label: 'Accepted',
-      value: bookings.filter(b => b.status === 'ACCEPTED').length,
-      color: 'bg-emerald-500/10 text-emerald-600',
-      icon: FiCheck
+      label: 'Total Earnings',
+      value: `₹${totalEarnings.toLocaleString()}`,
+      color: 'bg-green-500/10 text-green-600',
+      icon: FiDollarSign
     },
     {
-      label: 'Pending',
-      value: bookings.filter(b => b.status === 'PENDING').length,
+      label: 'Pending Payment',
+      value: `₹${pendingEarnings.toLocaleString()}`,
       color: 'bg-amber-500/10 text-amber-600',
       icon: FiClock
     },
@@ -352,7 +512,7 @@ export default function WorkerDashboard() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={handleRefresh}
+                onClick={() => fetchWorkerData(worker.id)}
                 disabled={refreshing}
                 className="flex items-center gap-2 bg-white text-gray-700 px-3 sm:px-4 py-2 sm:py-3 rounded-xl border border-gray-300 hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50 transition-all duration-200 font-medium shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
               >
@@ -368,12 +528,98 @@ export default function WorkerDashboard() {
           </div>
         </motion.div>
 
+        {/* Payment Details Section */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+          className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6"
+        >
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <FiCreditCard className="text-blue-600" />
+                Payment Details
+              </h2>
+              <p className="text-gray-600 mt-1 text-sm">Add your payment information to receive earnings</p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => editingPayment ? handleSavePaymentDetails() : setEditingPayment(true)}
+              disabled={savingPayment}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 transition-all duration-200"
+            >
+              {editingPayment ? (
+                <>
+                  <FiSave className="w-4 h-4" />
+                  {savingPayment ? 'Saving...' : 'Save Details'}
+                </>
+              ) : (
+                <>
+                  <FiEdit3 className="w-4 h-4" />
+                  Edit Payment
+                </>
+              )}
+            </motion.button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                UPI ID
+              </label>
+              {editingPayment ? (
+                <input
+                  type="text"
+                  value={paymentDetails.upiId}
+                  onChange={(e) => setPaymentDetails(prev => ({ ...prev, upiId: e.target.value }))}
+                  placeholder="yourname@upi"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              ) : (
+                <div className="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                  {paymentDetails.upiId || 'Not set'}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              {editingPayment ? (
+                <input
+                  type="tel"
+                  value={paymentDetails.phoneNumber}
+                  onChange={(e) => setPaymentDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                  placeholder="+91 9876543210"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              ) : (
+                <div className="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                  {paymentDetails.phoneNumber || 'Not set'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {!paymentDetails.upiId && !paymentDetails.phoneNumber && !editingPayment && (
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="text-amber-800 text-sm">
+                ⚠️ Please add your payment details to receive earnings for completed work.
+              </p>
+            </div>
+          )}
+        </motion.div>
+
         {/* Notifications Panel */}
         <NotificationsPanel
           notifications={notifications}
           onAcceptBooking={handleAcceptBooking}
           onClose={() => setShowNotifications(false)}
           isOpen={showNotifications}
+          acceptedBookings={acceptedBookings}
         />
 
         {/* Stats Grid */}
@@ -446,7 +692,7 @@ export default function WorkerDashboard() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={handleRefresh}
+                  onClick={() => fetchWorkerData(worker.id)}
                   className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
                 >
                   Check for New Bookings
@@ -462,6 +708,8 @@ export default function WorkerDashboard() {
                 {bookings.map((booking) => {
                   const statusConfig = getStatusConfig(booking.status);
                   const StatusIcon = statusConfig.icon;
+                  const earnings = calculateEarnings(booking);
+                  const paymentStatusConfig = getPaymentStatusConfig(booking.paymentStatus || 'PENDING');
 
                   return (
                     <motion.div
@@ -490,11 +738,28 @@ export default function WorkerDashboard() {
                                 <StatusIcon className="w-3 h-3" />
                                 {statusConfig.label}
                               </span>
-                              {booking.totalAmount && (
-                                <div className="flex items-center gap-1 text-green-600 font-semibold">
+                              
+                              {/* Enhanced Earnings Display */}
+                              <div className="text-right">
+                                <div className="flex items-center gap-1 text-green-600 font-semibold text-lg">
                                   <FiDollarSign className="w-4 h-4" />
-                                  <span>₹{booking.totalAmount}</span>
+                                  <span>₹{Math.round(earnings.total).toLocaleString()}</span>
                                 </div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  <div>₹{Math.round(earnings.daily).toLocaleString()}/day</div>
+                                  <div>{earnings.days} day{earnings.days !== 1 ? 's' : ''} total</div>
+                                </div>
+                                {earnings.isAdminPrice && (
+                                  <div className="text-xs text-blue-600 font-medium mt-1 bg-blue-50 px-2 py-1 rounded">
+                                    ✓ Fixed rate
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {booking.status === 'COMPLETED' && (
+                                <span className={`inline-flex items-center gap-2 px-2 py-1 rounded text-xs font-medium border ${paymentStatusConfig.color}`}>
+                                  {paymentStatusConfig.label}
+                                </span>
                               )}
                             </div>
                           </div>
@@ -545,6 +810,63 @@ export default function WorkerDashboard() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Enhanced Earnings Information Section */}
+                      {(booking.status === 'ACCEPTED' || booking.status === 'IN_PROGRESS' || booking.status === 'COMPLETED') && (
+                        <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4 mt-4">
+                          <h4 className="font-semibold text-blue-800 text-sm mb-3 flex items-center gap-2">
+                            <FiDollarSign className="w-4 h-4" />
+                            Earnings Breakdown
+                            {earnings.isAdminPrice && (
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded ml-2">
+                                Admin Fixed Rate
+                              </span>
+                            )}
+                          </h4>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <div className="bg-white rounded-lg p-3 border border-blue-100">
+                              <p className="text-2xl font-bold text-green-600">₹{Math.round(earnings.daily).toLocaleString()}</p>
+                              <p className="text-blue-700 text-sm font-medium">Per Day</p>
+                              <p className="text-gray-500 text-xs mt-1">Daily rate</p>
+                            </div>
+                            
+                            <div className="bg-white rounded-lg p-3 border border-blue-100">
+                              <p className="text-xl font-bold text-blue-600">{earnings.days}</p>
+                              <p className="text-blue-700 text-sm font-medium">Days</p>
+                              <p className="text-gray-500 text-xs mt-1">Work duration</p>
+                            </div>
+                            
+                            <div className="bg-white rounded-lg p-3 border border-green-100">
+                              <p className="text-2xl font-bold text-green-600">₹{Math.round(earnings.total).toLocaleString()}</p>
+                              <p className="text-green-700 text-sm font-medium">Total Pay</p>
+                              <p className="text-gray-600 text-xs mt-1">
+                                {earnings.days} × ₹{Math.round(earnings.daily).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-3 text-center">
+                            <p className="text-blue-700 text-sm font-medium">
+                              {booking.status === 'COMPLETED' ? (
+                                paymentStatusConfig.label === 'Payment Completed' ? (
+                                  <span className="text-green-600">✅ Paid: ₹{Math.round(earnings.total).toLocaleString()}</span>
+                                ) : (
+                                  <span className="text-amber-600">⏳ {paymentStatusConfig.label}: ₹{Math.round(earnings.total).toLocaleString()}</span>
+                                )
+                              ) : (
+                                <span>You will earn <strong>₹{Math.round(earnings.total).toLocaleString()}</strong> for {earnings.days} day{earnings.days !== 1 ? 's' : ''} of work</span>
+                              )}
+                            </p>
+                            
+                            {!paymentDetails.upiId && !paymentDetails.phoneNumber && booking.status !== 'COMPLETED' && (
+                              <p className="text-amber-600 text-xs mt-2 font-medium">
+                                ⚠️ Add payment details to receive your earnings
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Special Notes */}
                       {booking.specialNotes && (

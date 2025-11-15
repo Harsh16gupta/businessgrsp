@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { sendBusinessRequirementEmail } from '@/lib/nodemailer'
 
-// In your /api/business/requirement/route.ts
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -16,13 +15,15 @@ export async function POST(request: NextRequest) {
       duration,
       location,
       additionalNotes,
-      proposedBudget // ✅ MAKE SURE THIS IS INCLUDED
+      proposedBudget, // Per worker per day amount from business
+      numberOfDays,   // Number of days for the work
+      totalCost       // Calculated total cost (workers × days × rate)
     } = body;
 
     console.log('📧 API Received data:', body); // Debug log
 
     // Validate required fields
-    if (!companyName || !contactPerson || !email || !phone || !serviceType || !workersNeeded || !duration || !location) {
+    if (!companyName || !contactPerson || !email || !phone || !serviceType || !workersNeeded || !duration || !location || !numberOfDays) {
       return NextResponse.json(
         { success: false, error: 'All fields are required' },
         { status: 400 }
@@ -42,6 +43,14 @@ export async function POST(request: NextRequest) {
       // Set expiry time (1 hour from now)
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
+      // Calculate negotiated price (total proposed by business)
+      const negotiatedPrice = proposedBudget ? parseFloat(proposedBudget) : null;
+      
+      // Calculate total cost if not provided
+      const calculatedTotalCost = totalCost ? parseFloat(totalCost) : 
+        (negotiatedPrice && numberOfDays && workersNeeded ? 
+          negotiatedPrice * parseInt(workersNeeded) * parseInt(numberOfDays) : null);
+
       // Business user exists, create the requirement immediately
       const booking = await prisma.businessBooking.create({
         data: {
@@ -52,6 +61,9 @@ export async function POST(request: NextRequest) {
           location,
           additionalNotes: additionalNotes || '',
           status: 'PENDING',
+          negotiatedPrice: negotiatedPrice,
+          numberOfDays: parseInt(numberOfDays),
+          totalCost: calculatedTotalCost,
           acceptToken,
           expiresAt,
           date: new Date()
@@ -71,10 +83,13 @@ export async function POST(request: NextRequest) {
       console.log('✅ Business requirement created:', {
         bookingId: booking.id,
         serviceType: booking.serviceType,
-        workersNeeded: booking.workersNeeded
+        workersNeeded: booking.workersNeeded,
+        numberOfDays: booking.numberOfDays,
+        negotiatedPrice: booking.negotiatedPrice,
+        totalCost: booking.totalCost
       });
 
-      // ✅ Send email with ALL data including proposedBudget
+      // ✅ Send email with ALL data including payment details
       try {
         await sendBusinessRequirementEmail({
           companyName,
@@ -86,7 +101,9 @@ export async function POST(request: NextRequest) {
           duration,
           location,
           additionalNotes: additionalNotes || '',
-          proposedBudget: proposedBudget || '', // ✅ INCLUDE BUDGET
+          proposedBudget: proposedBudget || '',
+          numberOfDays: parseInt(numberOfDays),
+          totalCost: calculatedTotalCost,
           bookingId: booking.id
         });
         console.log('✅ Email sent successfully to admin');
@@ -116,7 +133,9 @@ export async function POST(request: NextRequest) {
           duration,
           location,
           additionalNotes,
-          proposedBudget // ✅ INCLUDE BUDGET IN REDIRECT
+          proposedBudget,
+          numberOfDays,
+          totalCost
         },
         message: 'Please create a business account first'
       }, { status: 401 });
@@ -134,4 +153,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-// ✅ REMOVE the duplicate email functions from here - they're causing conflicts

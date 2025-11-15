@@ -26,8 +26,10 @@ export const sendBusinessRequirementEmail = async (formData: any) => {
   const additionalNotes = formData.additionalNotes || 'None';
   const bookingId = formData.bookingId || 'N/A';
   const proposedBudget = formData.proposedBudget || 'Not specified';
+  const numberOfDays = formData.numberOfDays || 'Not specified';
+  const totalCost = formData.totalCost || null;
 
-  // ✅ COMPLETE EMAIL TEMPLATE WITH ALL FIELDS
+  // ✅ COMPLETE EMAIL TEMPLATE WITH ALL FIELDS INCLUDING PAYMENT BREAKDOWN
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -84,6 +86,24 @@ export const sendBusinessRequirementEmail = async (formData: any) => {
           border-radius: 6px;
           border-left: 4px solid #f59e0b;
         }
+        .payment-breakdown {
+          background: #f0fdf4;
+          padding: 15px;
+          border-radius: 6px;
+          border-left: 4px solid #10b981;
+        }
+        .total-cost {
+          background: #dcfce7;
+          padding: 15px;
+          border-radius: 6px;
+          text-align: center;
+          border: 2px solid #10b981;
+        }
+        .calculation {
+          font-size: 0.9em;
+          color: #059669;
+          margin-top: 5px;
+        }
       </style>
     </head>
     <body>
@@ -110,16 +130,27 @@ export const sendBusinessRequirementEmail = async (formData: any) => {
             <div class="value">
               <strong>Service Type:</strong> ${selectedService}<br>
               <strong>Workers Needed:</strong> ${workersNeeded}<br>
-              <strong>Duration:</strong> ${duration}<br>
+              <strong>Duration per Day:</strong> ${duration}<br>
+              <strong>Number of Days:</strong> ${numberOfDays}<br>
               <strong>Location:</strong> ${location}
             </div>
           </div>
 
-          <!-- Proposed Budget -->
+          <!-- Payment Breakdown -->
           <div class="field">
-            <div class="label">Proposed Budget</div>
-            <div class="value budget-highlight">
-              <strong>${proposedBudget}</strong>
+            <div class="label">Payment Details</div>
+            <div class="payment-breakdown">
+              <strong>Proposed Budget per Worker per Day:</strong> ₹${proposedBudget}<br>
+              <strong>Total Workers:</strong> ${workersNeeded}<br>
+              <strong>Total Days:</strong> ${numberOfDays}<br>
+              ${totalCost ? `
+              <div class="total-cost">
+                <strong>Estimated Total Project Cost: ₹${parseInt(totalCost).toLocaleString('en-IN')}</strong>
+                <div class="calculation">
+                  Calculation: ${workersNeeded} workers × ${numberOfDays} days × ₹${proposedBudget}/day
+                </div>
+              </div>
+              ` : ''}
             </div>
           </div>
 
@@ -138,6 +169,23 @@ export const sendBusinessRequirementEmail = async (formData: any) => {
             <div class="value notes">${additionalNotes}</div>
           </div>
           ` : ''}
+
+          <!-- Action Required -->
+          <div class="field">
+            <div class="label">Action Required</div>
+            <div class="value">
+              <p style="color: #dc2626; font-weight: bold;">
+                ⚡ Please log in to the admin panel to assign workers and set final payment amounts.
+              </p>
+              <p><strong>Next Steps:</strong></p>
+              <ul>
+                <li>Review the proposed budget</li>
+                <li>Assign suitable workers</li>
+                <li>Set final payment amounts for workers</li>
+                <li>Send notifications to assigned workers</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </body>
@@ -159,12 +207,19 @@ STAFF REQUIREMENT:
 ------------------
 Type: ${selectedService}
 Workers Needed: ${workersNeeded}
-Duration: ${duration}
+Duration per Day: ${duration}
+Number of Days: ${numberOfDays}
 Location: ${location}
 
-PROPOSED BUDGET:
+PAYMENT DETAILS:
 ----------------
-${proposedBudget}
+Proposed Budget per Worker per Day: ₹${proposedBudget}
+Total Workers: ${workersNeeded}
+Total Days: ${numberOfDays}
+${totalCost ? `
+ESTIMATED TOTAL PROJECT COST: ₹${parseInt(totalCost).toLocaleString('en-IN')}
+Calculation: ${workersNeeded} workers × ${numberOfDays} days × ₹${proposedBudget}/day
+` : ''}
 
 BOOKING REFERENCE:
 ------------------
@@ -174,6 +229,14 @@ ADDITIONAL NOTES:
 -----------------
 ${additionalNotes}
 
+ACTION REQUIRED:
+----------------
+⚡ Please log in to the admin panel to:
+   - Review the proposed budget
+   - Assign suitable workers
+   - Set final payment amounts for workers
+   - Send notifications to assigned workers
+
 Submitted: ${new Date().toLocaleString('en-IN')}
 =================================
   `.trim();
@@ -182,7 +245,7 @@ Submitted: ${new Date().toLocaleString('en-IN')}
     const result = await transporter.sendMail({
       from: `"GRS WORKER BUSINESS" <${process.env.SMTP_USER}>`,
       to: 'satyam.grss10@gmail.com', // Your admin email
-      subject: `New Staff Requirement - ${formData.companyName}`,
+      subject: `New Staff Requirement - ${formData.companyName} (${workersNeeded} workers, ${numberOfDays} days)`,
       text: textContent,
       html: htmlContent,
     });

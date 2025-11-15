@@ -15,6 +15,7 @@ interface RequirementFormData {
   location: string;
   additionalNotes: string;
   proposedBudget: string;
+  numberOfDays: string; // Add this field
 }
 
 interface RequirementFormProps {
@@ -27,7 +28,6 @@ export default function RequirementForm({
   serviceId = '' 
 }: RequirementFormProps) {
   const router = useRouter();
-  // Remove useSearchParams hook
   
   const [formData, setFormData] = useState<RequirementFormData>({
     companyName: '',
@@ -39,7 +39,8 @@ export default function RequirementForm({
     duration: '',
     location: '',
     additionalNotes: '',
-    proposedBudget: ''
+    proposedBudget: '',
+    numberOfDays: '' // Initialize new field
   });
 
   const [services, setServices] = useState<Service[]>([]);
@@ -49,6 +50,20 @@ export default function RequirementForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error' | 'auth_required'>('idle');
   const [authFormData, setAuthFormData] = useState<RequirementFormData | null>(null);
+
+  // Calculate total cost
+  const calculateTotalCost = () => {
+    const workers = parseInt(formData.workersNeeded) || 0;
+    const days = parseInt(formData.numberOfDays) || 0;
+    const budget = parseFloat(formData.proposedBudget) || 0;
+    
+    if (workers > 0 && days > 0 && budget > 0) {
+      return workers * days * budget;
+    }
+    return 0;
+  };
+
+  const totalCost = calculateTotalCost();
 
   // Fetch services from API
   useEffect(() => {
@@ -128,7 +143,9 @@ export default function RequirementForm({
         body: JSON.stringify({
           ...data,
           phone: userPhone,
-          proposedBudget: data.proposedBudget
+          proposedBudget: data.proposedBudget,
+          numberOfDays: data.numberOfDays,
+          totalCost: totalCost
         }),
       });
 
@@ -146,7 +163,8 @@ export default function RequirementForm({
           duration: '',
           location: '',
           additionalNotes: '',
-          proposedBudget: ''
+          proposedBudget: '',
+          numberOfDays: ''
         });
         setAuthFormData(null);
       } else {
@@ -181,7 +199,9 @@ export default function RequirementForm({
         body: JSON.stringify({
           ...formData,
           phone: userPhone,
-          proposedBudget: formData.proposedBudget
+          proposedBudget: formData.proposedBudget,
+          numberOfDays: formData.numberOfDays,
+          totalCost: totalCost
         }),
       });
 
@@ -199,14 +219,16 @@ export default function RequirementForm({
           duration: '',
           location: '',
           additionalNotes: '',
-          proposedBudget: ''
+          proposedBudget: '',
+          numberOfDays: ''
         });
       } else if (response.status === 401 && result.requireAuth) {
         setSubmitStatus('auth_required');
         sessionStorage.setItem('pendingBusinessRequirement', JSON.stringify({
           ...formData,
           phone: userPhone,
-          proposedBudget: formData.proposedBudget
+          proposedBudget: formData.proposedBudget,
+          numberOfDays: formData.numberOfDays
         }));
 
         const queryParams = new URLSearchParams({
@@ -232,7 +254,8 @@ export default function RequirementForm({
 
   const isFormValid = formData.companyName && formData.contactPerson &&
     formData.email && formData.phone && formData.serviceType &&
-    formData.workersNeeded && formData.duration && formData.location;
+    formData.workersNeeded && formData.duration && formData.location &&
+    formData.numberOfDays; // Add numberOfDays to validation
 
   return (
     <section className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 min-h-screen bg-white dark:bg-slate-900 transition-colors duration-300">
@@ -366,7 +389,7 @@ export default function RequirementForm({
                 >
                   <option value="" className="text-slate-500 dark:text-slate-400">Select Staff Type</option>
                   {services
-                    .filter(service => service.isActive !== false) // Only show active services
+                    .filter(service => service.isActive !== false)
                     .map(service => (
                     <option key={service.id} value={service.name} className="text-slate-900 dark:text-white">
                       {service.name}
@@ -376,8 +399,8 @@ export default function RequirementForm({
               )}
             </div>
 
-            {/* Workers & Duration */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            {/* Workers, Duration & Number of Days */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 transition-colors duration-300">
                   Workers Needed
@@ -394,7 +417,7 @@ export default function RequirementForm({
               </div>
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 transition-colors duration-300">
-                  Duration
+                  Duration per Day
                 </label>
                 <select
                   required
@@ -403,12 +426,25 @@ export default function RequirementForm({
                   onChange={(e) => handleInputChange('duration', e.target.value)}
                 >
                   <option value="" className="text-slate-500 dark:text-slate-400">Select Duration</option>
+                  <option value="6-hour shift">6-hour Shift</option>
                   <option value="8-hour shift">8-hour Shift</option>
+                  <option value="10-hour shift">10-hour Shift</option>
                   <option value="12-hour shift">12-hour Shift</option>
-                  <option value="Full-time monthly">Full-time Monthly</option>
-                  <option value="Part-time daily">Part-time Daily</option>
-                  <option value="Project basis">Project Basis</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 transition-colors duration-300">
+                  Number of Days
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
+                  placeholder="e.g., 7 days"
+                  value={formData.numberOfDays}
+                  onChange={(e) => handleInputChange('numberOfDays', e.target.value)}
+                />
               </div>
             </div>
 
@@ -429,17 +465,36 @@ export default function RequirementForm({
               </div>
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 transition-colors duration-300">
-                  Proposed Budget
+                  Proposed Budget per Worker per Day
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                  placeholder="e.g. ₹. as per requirement"
+                  placeholder="e.g., ₹500"
                   value={formData.proposedBudget}
                   onChange={(e) => handleInputChange('proposedBudget', e.target.value)}
                 />
               </div>
             </div>
+
+            {/* Total Cost Calculation */}
+            {totalCost > 0 && (
+              <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-700 dark:text-blue-300 text-sm font-medium">
+                      Estimated Total Cost
+                    </p>
+                    <p className="text-blue-600 dark:text-blue-400 text-xs">
+                      {formData.workersNeeded} workers × {formData.numberOfDays} days × ₹{formData.proposedBudget}/day
+                    </p>
+                  </div>
+                  <p className="text-blue-700 dark:text-blue-300 text-lg font-bold">
+                    ₹{totalCost.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Additional Notes */}
             <div>

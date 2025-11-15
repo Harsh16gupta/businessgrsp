@@ -12,6 +12,11 @@ interface BusinessBooking {
   location: string;
   status: string;
   createdAt: string;
+  paymentAmount?: number;
+  amountPerWorker?: number;
+  negotiatedPrice?: number;
+  numberOfDays?: number; // Add this field
+  totalCost?: number; // Add this field
   business: {
     companyName: string;
     name: string;
@@ -132,6 +137,24 @@ export default function BookingsPage() {
     }
   };
 
+  // Format currency for display
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Calculate total project cost for business
+  const calculateBusinessTotalCost = (booking: BusinessBooking) => {
+    if (booking.negotiatedPrice && booking.numberOfDays && booking.workersNeeded) {
+      return booking.negotiatedPrice * booking.workersNeeded * booking.numberOfDays;
+    }
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -181,7 +204,9 @@ export default function BookingsPage() {
               { value: 'ALL', label: 'All', color: 'blue' },
               { value: 'PENDING', label: 'Pending', color: 'yellow' },
               { value: 'ASSIGNED', label: 'Assigned', color: 'blue' },
-              { value: 'COMPLETED', label: 'Completed', color: 'green' }
+              { value: 'CONFIRMED', label: 'Confirmed', color: 'green' },
+              { value: 'COMPLETED', label: 'Completed', color: 'gray' },
+              { value: 'CANCELLED', label: 'Cancelled', color: 'red' }
             ].map((filter) => (
               <button
                 key={filter.value}
@@ -208,108 +233,210 @@ export default function BookingsPage() {
         {/* Bookings List */}
         <div className="space-y-4 md:space-y-6">
           {bookings.length > 0 ? (
-            bookings.map((booking) => (
-              <div 
-                key={booking.id} 
-                className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all duration-300 hover:shadow-md cursor-pointer"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                  {/* Main Content */}
-                  <div className="flex-1">
-                    {/* Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-2">
-                      <div className="flex items-center space-x-3">
-                        <span className={`px-3 py-1 text-sm font-medium rounded-full transition-all duration-200 ${getStatusColor(booking.status)}`}>
-                          {booking.status}
-                        </span>
-                        <h3 className="text-lg md:text-xl font-semibold text-gray-900 line-clamp-1">
-                          {booking.serviceType}
-                        </h3>
-                      </div>
-                      {!isMobile && (
-                        <div className="text-sm text-gray-500">
-                          {new Date(booking.createdAt).toLocaleDateString()}
+            bookings.map((booking) => {
+              const businessTotalCost = calculateBusinessTotalCost(booking);
+              
+              return (
+                <div 
+                  key={booking.id} 
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 transition-all duration-300 hover:shadow-md cursor-pointer"
+                  onClick={() => router.push(`/admin/bookings/${booking.id}`)}
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                    {/* Main Content */}
+                    <div className="flex-1">
+                      {/* Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-2">
+                        <div className="flex items-center space-x-3">
+                          <span className={`px-3 py-1 text-sm font-medium rounded-full transition-all duration-200 ${getStatusColor(booking.status)}`}>
+                            {booking.status}
+                          </span>
+                          <h3 className="text-lg md:text-xl font-semibold text-gray-900 line-clamp-1">
+                            {booking.serviceType}
+                          </h3>
                         </div>
-                      )}
-                    </div>
-
-                    {/* Booking Details */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 text-sm">
-                      <div className="space-y-1">
-                        <p className="text-gray-600 font-medium">Business</p>
-                        <p className="text-gray-900">{booking.business.companyName}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-gray-600 font-medium">Contact</p>
-                        <p className="text-gray-900">{booking.business.name}</p>
-                        <p className="text-gray-500 text-xs">{booking.business.phone}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-gray-600 font-medium">Workers</p>
-                        <p className="text-gray-900">{getAssignmentsCount(booking)} assigned</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-gray-600 font-medium">Location</p>
-                        <p className="text-gray-900 line-clamp-1">{booking.location}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-gray-600 font-medium">Duration</p>
-                        <p className="text-gray-900">{booking.duration}</p>
-                      </div>
-                      {isMobile && (
-                        <div className="space-y-1">
-                          <p className="text-gray-600 font-medium">Created</p>
-                          <p className="text-gray-900">{new Date(booking.createdAt).toLocaleDateString()}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Assignments Summary */}
-                    {booking.assignments.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-gray-100">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Assigned Workers:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {booking.assignments.slice(0, isMobile ? 2 : 4).map((assignment, index) => (
-                            <div 
-                              key={index}
-                              className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-xs font-medium"
-                            >
-                              {assignment.worker.name}
+                        <div className="flex items-center space-x-4">
+                          {!isMobile && (
+                            <div className="text-sm text-gray-500">
+                              {new Date(booking.createdAt).toLocaleDateString()}
                             </div>
-                          ))}
-                          {booking.assignments.length > (isMobile ? 2 : 4) && (
-                            <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-medium">
-                              +{booking.assignments.length - (isMobile ? 2 : 4)} more
+                          )}
+                          {/* Payment Badge - Show business user's amount */}
+                          {booking.negotiatedPrice && (
+                            <div className="flex items-center space-x-1 bg-purple-50 px-3 py-1 rounded-lg border border-purple-200">
+                              <span className="text-purple-600 text-sm font-medium">
+                                💼 
+                              </span>
+                              <span className="text-purple-700 text-sm font-medium">
+                                {formatCurrency(booking.negotiatedPrice)}/day
+                              </span>
+                            </div>
+                          )}
+                          {/* Admin set payment badge */}
+                          {booking.paymentAmount && (
+                            <div className="flex items-center space-x-1 bg-green-50 px-3 py-1 rounded-lg border border-green-200">
+                              <span className="text-green-600 text-sm font-medium">
+                                💰 
+                              </span>
+                              <span className="text-green-700 text-sm font-medium">
+                                {formatCurrency(booking.paymentAmount)}
+                              </span>
                             </div>
                           )}
                         </div>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row lg:flex-col gap-2 lg:gap-3 lg:w-32 lg:flex-shrink-0">
-                    <Link
-                      href={`/admin/bookings/${booking.id}`}
-                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-300 cursor-pointer text-center shadow-sm hover:shadow-md active:scale-95"
+                      {/* Booking Details */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 text-sm">
+                        <div className="space-y-1">
+                          <p className="text-gray-600 font-medium">Business</p>
+                          <p className="text-gray-900">{booking.business.companyName}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-gray-600 font-medium">Contact</p>
+                          <p className="text-gray-900">{booking.business.name}</p>
+                          <p className="text-gray-500 text-xs">{booking.business.phone}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-gray-600 font-medium">Workers</p>
+                          <p className="text-gray-900">{getAssignmentsCount(booking)} assigned</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-gray-600 font-medium">Location</p>
+                          <p className="text-gray-900 line-clamp-1">{booking.location}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-gray-600 font-medium">Duration</p>
+                          <p className="text-gray-900">{booking.duration}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-gray-600 font-medium">Days</p>
+                          <p className="text-gray-900">{booking.numberOfDays || 'Not specified'}</p>
+                        </div>
+                        
+                        {/* Payment Information */}
+                        <div className="space-y-1 sm:col-span-2 lg:col-span-2">
+                          <p className="text-gray-600 font-medium">Payment Information</p>
+                          <div className="flex flex-wrap gap-2">
+                            {/* Business User's Proposed Amount */}
+                            {booking.negotiatedPrice && booking.numberOfDays && (
+                              <div className="flex flex-col">
+                                <span className="bg-purple-100 text-purple-800 px-3 py-2 rounded-lg text-xs font-medium">
+                                  <div className="flex items-center space-x-1">
+                                    <span>💼 Business Proposed:</span>
+                                    <span className="font-bold">{formatCurrency(booking.negotiatedPrice)}/worker/day</span>
+                                  </div>
+                                  {businessTotalCost && (
+                                    <div className="text-purple-700 text-xs mt-1">
+                                      Total Project: {formatCurrency(businessTotalCost)}
+                                    </div>
+                                  )}
+                                </span>
+                                <span className="text-purple-600 text-xs mt-1">
+                                  {booking.workersNeeded} workers × {booking.numberOfDays} days
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Admin Set Payment Amount */}
+                            {booking.paymentAmount && booking.amountPerWorker && (
+                              <div className="flex flex-col">
+                                <span className="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-xs font-medium">
+                                  <div className="flex items-center space-x-1">
+                                    <span>💰 Admin Set:</span>
+                                    <span className="font-bold">{formatCurrency(booking.amountPerWorker)}/worker/day</span>
+                                  </div>
+                                  <div className="text-green-700 text-xs mt-1">
+                                    Total: {formatCurrency(booking.paymentAmount)}
+                                  </div>
+                                </span>
+                                <span className="text-green-600 text-xs mt-1">
+                                  Amount set by admin for workers
+                                </span>
+                              </div>
+                            )}
+
+                            {/* No Payment Set */}
+                            {!booking.negotiatedPrice && !booking.paymentAmount && (
+                              <span className="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-xs font-medium">
+                                💸 No payment amount set
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {isMobile && (
+                          <div className="space-y-1">
+                            <p className="text-gray-600 font-medium">Created</p>
+                            <p className="text-gray-900">{new Date(booking.createdAt).toLocaleDateString()}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Assignments Summary */}
+                      {booking.assignments.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                          <p className="text-sm font-medium text-gray-700 mb-2">Assigned Workers:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {booking.assignments.slice(0, isMobile ? 2 : 4).map((assignment, index) => (
+                              <div 
+                                key={index}
+                                className={`px-3 py-1 rounded-lg text-xs font-medium ${
+                                  assignment.status === 'ACCEPTED' 
+                                    ? 'bg-green-100 text-green-800 border border-green-200'
+                                    : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                }`}
+                              >
+                                {assignment.worker.name}
+                                <span className="ml-1 text-xs opacity-75">
+                                  ({assignment.status.toLowerCase()})
+                                </span>
+                              </div>
+                            ))}
+                            {booking.assignments.length > (isMobile ? 2 : 4) && (
+                              <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-medium">
+                                +{booking.assignments.length - (isMobile ? 2 : 4)} more
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div 
+                      className="flex flex-col sm:flex-row lg:flex-col gap-2 lg:gap-3 lg:w-32 lg:flex-shrink-0"
+                      onClick={(e) => e.stopPropagation()} // Prevent navigation when clicking buttons
                     >
-                      {isMobile ? 'Manage' : 'Manage Booking'}
-                    </Link>
-                    {booking.status === 'PENDING' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSendWorkerLinks(booking.id);
-                        }}
-                        className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md active:scale-95"
+                      <Link
+                        href={`/admin/bookings/${booking.id}`}
+                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-300 cursor-pointer text-center shadow-sm hover:shadow-md active:scale-95"
                       >
-                        {isMobile ? 'Send Links' : 'Send Worker Links'}
-                      </button>
-                    )}
+                        {isMobile ? 'Manage' : 'Manage Booking'}
+                      </Link>
+                      {booking.status === 'PENDING' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSendWorkerLinks(booking.id);
+                          }}
+                          className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md active:scale-95"
+                        >
+                          {isMobile ? 'Send Links' : 'Send Worker Links'}
+                        </button>
+                      )}
+                      {booking.status === 'ASSIGNED' && booking.assignments.filter(a => a.status === 'ACCEPTED').length > 0 && (
+                        <div className="text-center">
+                          <span className="text-xs text-green-600 font-medium">
+                            {booking.assignments.filter(a => a.status === 'ACCEPTED').length} accepted
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 md:p-12 text-center">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-300">
@@ -348,7 +475,13 @@ export default function BookingsPage() {
               </div>
               <span className="text-xs font-medium">Refresh</span>
             </button>
-            <button className="flex flex-col items-center justify-center text-gray-600">
+            <button 
+              className="flex flex-col items-center justify-center text-gray-600"
+              onClick={() => {
+                // Scroll to filters section
+                document.querySelector('.bg-white.rounded-xl.shadow-sm')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mb-1">
                 <span className="text-lg">⚙️</span>
               </div>

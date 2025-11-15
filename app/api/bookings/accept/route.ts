@@ -26,7 +26,10 @@ export async function GET(request: NextRequest) {
     const booking = await prisma.businessBooking.findUnique({
       where: { 
         acceptToken: token,
-        status: 'PENDING'
+        OR: [
+          { status: 'PENDING' },
+          { status: 'ASSIGNED' }
+        ]
       },
       include: {
         business: {
@@ -37,13 +40,26 @@ export async function GET(request: NextRequest) {
             companyName: true,
             location: true
           }
+        },
+        assignments: {
+          where: {
+            status: 'ACCEPTED'
+          },
+          include: {
+            worker: {
+              select: {
+                name: true,
+                phone: true
+              }
+            }
+          }
         }
       }
     });
 
     if (!booking) {
       return NextResponse.json(
-        { success: false, error: 'Booking not found or already processed' },
+        { success: false, error: 'Booking not found or no longer available' },
         { status: 404 }
       );
     }
@@ -61,40 +77,53 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // If workerId is provided, check if worker can accept this booking
+    // Check if worker has already accepted this booking
     if (workerId) {
-      const worker = await prisma.worker.findUnique({
-        where: { id: workerId }
+      const existingAssignment = await prisma.businessBookingAssignment.findFirst({
+        where: {
+          bookingId: booking.id,
+          workerId: workerId,
+          status: 'ACCEPTED'
+        }
       });
 
-      if (worker) {
-        // Check service compatibility
-        const serviceVariations = serviceTypeMapping[booking.serviceType] || [booking.serviceType.toLowerCase()];
-        const slugVersion = booking.serviceType.toLowerCase().replace(/[\/\s]+/g, '-');
-        if (!serviceVariations.includes(slugVersion)) {
-          serviceVariations.push(slugVersion);
-        }
+      if (existingAssignment) {
+        return NextResponse.json({
+          success: false,
+          error: 'You have already accepted this booking',
+          alreadyAccepted: true
+        }, { status: 400 });
+      }
 
-        const canAccept = serviceVariations.some(service => 
-          worker.services.includes(service)
-        );
+      // Check available spots
+      const acceptedAssignmentsCount = booking.assignments.length;
+      const availableSpots = booking.workersNeeded - acceptedAssignmentsCount;
 
-        if (!canAccept) {
-          return NextResponse.json({
-            success: false,
-            error: `You cannot accept this booking. Your services: ${worker.services.join(', ')}, required: ${booking.serviceType}`
-          }, { status: 400 });
-        }
+      if (availableSpots <= 0) {
+        return NextResponse.json({
+          success: false,
+          error: 'All spots for this booking have been filled',
+          spotsFilled: true
+        }, { status: 400 });
       }
 
       return await acceptBooking(token, workerId);
     }
 
-    // If no workerId, return booking details
+    // If no workerId, return booking details with available spots info
+    const acceptedAssignmentsCount = booking.assignments.length;
+    const availableSpots = booking.workersNeeded - acceptedAssignmentsCount;
+
     return NextResponse.json({
       success: true,
-      data: booking,
-      message: 'Booking found. Please provide workerId to accept.'
+      data: {
+        ...booking,
+        availableSpots,
+        acceptedWorkers: booking.assignments.length
+      },
+      message: availableSpots > 0 
+        ? `Booking found. ${availableSpots} spot(s) available.` 
+        : 'Booking found but all spots are filled.'
     });
 
   } catch (error) {
@@ -171,7 +200,10 @@ async function acceptBooking(token: string, workerId: string) {
       const booking = await tx.businessBooking.findUnique({
         where: { 
           acceptToken: token,
-          status: 'PENDING'
+          OR: [
+            { status: 'PENDING' },
+            { status: 'ASSIGNED' }
+          ]
         },
         include: {
           business: {
@@ -182,6 +214,11 @@ async function acceptBooking(token: string, workerId: string) {
               companyName: true,
               location: true
             }
+          },
+          assignments: {
+            where: {
+              status: 'ACCEPTED'
+            }
           }
         }
       });
@@ -189,7 +226,7 @@ async function acceptBooking(token: string, workerId: string) {
       console.log('🔧 Booking found:', booking);
 
       if (!booking) {
-        throw new Error('Booking not found or already accepted');
+        throw new Error('Booking not found or no longer available');
       }
 
       // Check if booking expired
@@ -200,6 +237,27 @@ async function acceptBooking(token: string, workerId: string) {
           data: { status: 'EXPIRED' }
         });
         throw new Error('Booking has expired');
+      }
+
+      // Check if worker has already accepted this booking
+      const existingAssignment = await tx.businessBookingAssignment.findFirst({
+        where: {
+          bookingId: booking.id,
+          workerId: workerId,
+          status: 'ACCEPTED'
+        }
+      });
+
+      if (existingAssignment) {
+        throw new Error('You have already accepted this booking');
+      }
+
+      // Check available spots
+      const acceptedAssignmentsCount = booking.assignments.length;
+      const availableSpots = booking.workersNeeded - acceptedAssignmentsCount;
+
+      if (availableSpots <= 0) {
+        throw new Error('All spots for this booking have been filled');
       }
 
       // ✅ FIXED: Use service type mapping for matching
@@ -237,7 +295,20 @@ async function acceptBooking(token: string, workerId: string) {
         include: {
           booking: {
             include: {
-              business: true
+              business: true,
+              assignments: {
+                where: {
+                  status: 'ACCEPTED'
+                },
+                include: {
+                  worker: {
+                    select: {
+                      name: true,
+                      phone: true
+                    }
+                  }
+                }
+              }
             }
           },
           worker: true
@@ -245,17 +316,11 @@ async function acceptBooking(token: string, workerId: string) {
       });
 
       // Check if all needed workers are assigned
-      const assignmentsCount = await tx.businessBookingAssignment.count({
-        where: {
-          bookingId: booking.id,
-          status: 'ACCEPTED'
-        }
-      });
-
-      console.log(`🔧 Assignments count: ${assignmentsCount}, Workers needed: ${booking.workersNeeded}`);
+      const newAssignmentsCount = assignment.booking.assignments.length;
+      console.log(`🔧 New assignments count: ${newAssignmentsCount}, Workers needed: ${booking.workersNeeded}`);
 
       // If enough workers accepted, update booking status to ASSIGNED
-      if (assignmentsCount >= booking.workersNeeded) {
+      if (newAssignmentsCount >= booking.workersNeeded) {
         await tx.businessBooking.update({
           where: { id: booking.id },
           data: { status: 'ASSIGNED' }
@@ -305,13 +370,20 @@ async function acceptBooking(token: string, workerId: string) {
 // Send confirmation to business
 async function sendBusinessConfirmation(assignment: any) {
   try {
+    const acceptedWorkers = assignment.booking.assignments.map((a: any) => 
+      `• ${a.worker.name} (${a.worker.phone})`
+    ).join('\n');
+
     const businessMessage = `
-✅ *Your Booking Has Been Accepted!*
+✅ *New Worker Accepted Your Booking!*
 
 *Service:* ${assignment.booking.serviceType}
-*Worker:* ${assignment.worker.name}
+*New Worker:* ${assignment.worker.name}
 *Worker Phone:* ${assignment.worker.phone}
 ${assignment.worker.rating ? `*Rating:* ${assignment.worker.rating} ⭐` : ''}
+
+*All Accepted Workers (${assignment.booking.assignments.length}/${assignment.booking.workersNeeded}):*
+${acceptedWorkers}
 
 The worker will contact you shortly.
 
@@ -320,6 +392,11 @@ The worker will contact you shortly.
 - Location: ${assignment.booking.location}
 - Workers Needed: ${assignment.booking.workersNeeded}
 - Duration: ${assignment.booking.duration}
+
+${assignment.booking.assignments.length >= assignment.booking.workersNeeded ? 
+  '🎉 All required workers have been assigned!' : 
+  `Still need ${assignment.booking.workersNeeded - assignment.booking.assignments.length} more worker(s).`
+}
 
 Thank you for choosing our service! 🛠️
     `.trim();
